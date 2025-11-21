@@ -1,3 +1,4 @@
+mod registration;
 mod subprocessor;
 
 use std::path::PathBuf;

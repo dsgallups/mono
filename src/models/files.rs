@@ -1,5 +1,5 @@
+pub use super::_entities::files::{ActiveModel, Entity, Model};
 use sea_orm::entity::prelude::*;
-pub use super::_entities::files::{ActiveModel, Model, Entity};
 pub type Files = Entity;
 
 #[async_trait::async_trait]

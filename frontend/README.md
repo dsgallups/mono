@@ -1,42 +1,38 @@
-# SaaS Frontend
+# sv
 
-## Batteries included
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-- [TypeScript](https://www.typescriptlang.org/): A typed superset of JavaScript
-- [Rsbuild](https://rsbuild.dev/): A Rust-based web build tool
-- [Biome](https://biomejs.dev/): A Rust-based formatter and sensible linter for the web
-- [React](https://reactjs.org/): A JavaScript library for building user interfaces
+## Creating a project
 
-If you don't like React for some reason, Rsbuild makes it easy to replace it with something else!
-
-# Development
-
-To get started with the development of the SaaS frontend, follow these steps:
-
-### 1. Install Packages
-
-Use the following command to install the required packages using pnpm:
+If you're seeing this, you've probably already done this step. Congrats!
 
 ```sh
-pnpm install
+# create a new project in the current directory
+npx sv create
+
+# create a new project in my-app
+npx sv create my-app
 ```
 
-### 2. Run in Development Mode
+## Developing
 
-Once the packages are installed, run your frontend application in development mode with the following command:
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
 ```sh
-pnpm dev
+npm run dev
+
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
 ```
 
-This will start the development frontend server serving via vit
+## Building
 
-### 3. Build The application
-
-To build your application run the following command:
+To create a production version of your app:
 
 ```sh
-pnpm build
+npm run build
 ```
 
-After the build `dist` folder is ready to served by loco. run loco `cargo loco start` and the frontend application will served via Loco
+You can preview the production build with `npm run preview`.
+
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.

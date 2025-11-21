@@ -13,10 +13,7 @@ pub struct Params {
 }
 
 #[debug_handler]
-pub async fn perform_indexing_task(State(ctx): State<AppContext>, Json(params): Json<Params>) {
-    // so we could totally use a Loco worker for this task. They're set up to do this.
-    // However, for the purposes of this demo, I'm going to actually use my own async thread pool.
-
+pub async fn perform_indexing_task(State(_ctx): State<AppContext>, Json(params): Json<Params>) {
     tracing::info!("index on params: {params:?}");
 }
 

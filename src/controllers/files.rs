@@ -13,6 +13,8 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
     let item = Entity::find_by_id(id).one(&ctx.db).await?;
     item.ok_or_else(|| Error::NotFound)
 }
+
+#[expect(unused)]
 #[derive(Deserialize, Debug)]
 pub struct Params {
     q: Option<String>,

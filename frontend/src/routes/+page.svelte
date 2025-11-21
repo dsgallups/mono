@@ -7,6 +7,7 @@
 
 	let initialSearch = $state(true);
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let { data }: PageProps = $props();
 
 	let searchVal = $state('');

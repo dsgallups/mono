@@ -4,7 +4,10 @@
 use loco_rs::prelude::*;
 use serde::Deserialize;
 
-use crate::models::_entities::index_tasks::{ActiveModel, Entity, Model};
+use crate::{
+    models::_entities::index_tasks::{ActiveModel, Entity, Model},
+    workers::directory_indexer,
+};
 
 #[derive(Deserialize, Debug)]
 pub struct Params {
@@ -28,6 +31,12 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> R
         ..Default::default()
     };
     let item = item.insert(&ctx.db).await?;
+
+    directory_indexer::Worker::perform_later(
+        &ctx,
+        directory_indexer::WorkerArgs { task_id: item.id },
+    )
+    .await?;
     format::json(item)
 }
 

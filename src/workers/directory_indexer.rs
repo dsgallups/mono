@@ -1,7 +1,7 @@
-use std::path::PathBuf;
-
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use crate::models::index_tasks;
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -9,7 +9,7 @@ pub struct Worker {
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct WorkerArgs {
-    path: PathBuf,
+    pub task_id: i32,
 }
 
 #[async_trait]
@@ -47,8 +47,16 @@ impl BackgroundWorker<WorkerArgs> for Worker {
     ///
     /// # Returns
     /// * `Result<()>` - Ok if the job completed successfully, Err otherwise
-    async fn perform(&self, _args: WorkerArgs) -> Result<()> {
+    async fn perform(&self, args: WorkerArgs) -> Result<()> {
         println!("=================DirectoryIndexer=======================");
+
+        let task = index_tasks::Entity::find_by_id(args.task_id)
+            .one(&self.ctx.db)
+            .await?
+            .ok_or(Error::NotFound)?;
+
+        tracing::info!("Performing task {task:?}");
+
         // TODO: Some actual work goes here...
         Ok(())
     }

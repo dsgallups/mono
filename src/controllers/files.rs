@@ -26,10 +26,18 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
 }
 
 #[debug_handler]
-pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<FileResponse>>> {
-    let models = Entity::find().all(&ctx.db).await?;
+pub async fn list(State(_ctx): State<AppContext>) -> Result<Json<Vec<FileResponse>>> {
+    // let models = Entity::find().all(&ctx.db).await?;
 
-    Ok(Json(models.into_iter().map(Into::into).collect()))
+    // Ok(Json(models.into_iter().map(Into::into).collect()))
+
+    let files = vec![
+        FileResponse::new(1, "poly.txt"),
+        FileResponse::new(2, "another file.txt"),
+        FileResponse::new(2, "third_file.jpg"),
+    ];
+
+    Ok(Json(files))
 }
 
 #[debug_handler]

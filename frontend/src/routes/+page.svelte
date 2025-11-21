@@ -22,8 +22,6 @@
 			files
 		};
 	});
-	// eslint-disable-next-line svelte/no-inspect
-	$inspect(data);
 
 	let searchVal = $state('');
 
@@ -81,5 +79,8 @@
 		<div class="flex p-5">
 			<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
 		</div>
+		{#await data then data}
+			<div>{data.files.length}</div>
+		{/await}
 	{/if}
 </div>

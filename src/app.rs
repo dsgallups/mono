@@ -51,6 +51,9 @@ impl Hooks for App {
             .add_route(controllers::searches::routes())
     }
     async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
+        queue
+            .register(crate::workers::directory_indexer::Worker::build(ctx))
+            .await?;
         queue.register(DownloadWorker::build(ctx)).await?;
         Ok(())
     }

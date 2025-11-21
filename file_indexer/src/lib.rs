@@ -31,6 +31,7 @@ pub enum IndexEvent {
     DirectoryWalked,
 }
 
+/// TODO: keep a cache of already indexed files for the subprocessor to avoid
 pub struct FileIndexer {
     request_chan: UnboundedReceiver<IndexRequest>,
     path: PathBuf,

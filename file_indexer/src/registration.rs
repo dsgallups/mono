@@ -1,5 +1,6 @@
 use std::{ffi::OsStr, io, path::PathBuf};
 
+#[derive(Debug)]
 pub struct FileRegistration {
     path: PathBuf,
     file_bytes: FileBytes,
@@ -8,7 +9,7 @@ pub struct FileRegistration {
 impl FileRegistration {
     pub async fn new(path: PathBuf) -> Result<Self, FileRegError> {
         if !path.is_file() {
-            return Err(FileRegError::Directory);
+            return Err(FileRegError::dir(path));
         }
         // Ideally you would read the file headers here to make a determination of the file type.
         // Because I'm strapped for time, I'm only considering the extension.
@@ -18,9 +19,11 @@ impl FileRegistration {
             Some("jpeg") => Some(FileType::Jpeg),
             _ => None,
         } {
-            Some(file_type) => {
-                file_type.into_file_bytes(tokio::fs::read(&path).await.map_err(FileRegError::Io)?)
-            }
+            Some(file_type) => file_type.into_file_bytes(
+                tokio::fs::read(&path)
+                    .await
+                    .map_err(|e| FileRegError::io(path.clone(), e))?,
+            ),
             None => {
                 return Ok(Self {
                     path,
@@ -46,6 +49,7 @@ impl FileType {
     }
 }
 
+#[derive(Debug)]
 pub enum FileBytes {
     Text(Vec<u8>),
     Jpeg(Vec<u8>),
@@ -53,7 +57,26 @@ pub enum FileBytes {
 }
 impl FileBytes {}
 
-pub enum FileRegError {
+pub struct FileRegError {
+    pub path: PathBuf,
+    pub err_type: FileRegErrorType,
+}
+impl FileRegError {
+    fn dir(path: PathBuf) -> Self {
+        Self {
+            path,
+            err_type: FileRegErrorType::Directory,
+        }
+    }
+    fn io(path: PathBuf, err: io::Error) -> Self {
+        Self {
+            path,
+            err_type: FileRegErrorType::Io(err),
+        }
+    }
+}
+
+pub enum FileRegErrorType {
     Directory,
     Io(io::Error),
 }

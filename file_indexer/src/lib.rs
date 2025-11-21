@@ -1,7 +1,7 @@
 mod registration;
 mod subprocessor;
 
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 
 use thiserror::Error;
 use tokio::sync::{
@@ -9,6 +9,8 @@ use tokio::sync::{
     oneshot,
 };
 use walkdir::WalkDir;
+
+use crate::registration::FileRegistration;
 
 pub enum IndexRequest {
     Close(oneshot::Sender<Vec<IndexEvent>>),
@@ -27,6 +29,11 @@ impl From<SendError<IndexEvent>> for FileIndexError {
 #[derive(Debug)]
 pub enum IndexEvent {
     AccessError(walkdir::Error),
+    Read {
+        path: PathBuf,
+        err: io::Error,
+    },
+    Register(FileRegistration),
     /// The contents of the directory have been identified and split into
     /// new async threads
     DirectoryWalked,

@@ -1,27 +1,28 @@
-use std::{
-    error::Error,
-    ffi::OsStr,
-    io,
-    path::{Path, PathBuf},
-};
+use std::error::Error;
 
 use tokio::sync::mpsc::UnboundedSender;
 use walkdir::DirEntry;
 
-use crate::{IndexEvent, registration::FileRegistration};
+use crate::{
+    FileIndexError, IndexEvent,
+    registration::{FileRegError, FileRegErrorType, FileRegistration},
+};
 
 pub async fn process(
     entry: DirEntry,
     channel: UnboundedSender<IndexEvent>,
-) -> Result<(), Box<dyn Error + Send>> {
+) -> Result<(), FileIndexError> {
     match FileRegistration::new(entry.into_path()).await {
         Ok(registration) => {
-            //recorded!
+            channel.send(IndexEvent::Register(registration));
+            Ok(())
         }
-        Err(err) => {
-            //todo
-        }
+        Err(FileRegError { path, err_type }) => match err_type {
+            FileRegErrorType::Directory => Ok(()),
+            FileRegErrorType::Io(err) => {
+                channel.send(IndexEvent::Read { path, err })?;
+                Ok(())
+            }
+        },
     }
-
-    Ok(())
 }

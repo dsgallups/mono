@@ -1,5 +1,7 @@
 <script lang="ts">
-	let initialSearch = $state(true);
+	import MainSearch from './MainSearch.svelte';
+
+	let initialSearch = $state(false);
 
 	let searchVal = $state('');
 </script>
@@ -7,21 +9,21 @@
 <div class="flex">
 	{#if initialSearch}
 		<div class="flex items-center justify-center p-5">
-			<input
-				placeholder="search"
-				class="text-black sm:w-lg lg:w-4xl"
+			<MainSearch
 				bind:value={searchVal}
-				onkeyup={(e) => {
-					if (e.key === 'Enter') {
-						initialSearch = false;
-					}
+				onsubmit={() => {
+					initialSearch = false;
 				}}
 			/>
-			<button
-				onclick={() => {
+		</div>
+	{:else}
+		<div class="flex p-5">
+			<MainSearch
+				bind:value={searchVal}
+				onsubmit={() => {
 					initialSearch = false;
-				}}>Go</button
-			>
+				}}
+			/>
 		</div>
 	{/if}
 </div>

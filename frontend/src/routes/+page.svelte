@@ -1,7 +1,10 @@
 <script lang="ts">
+	import type { PageProps } from './$types';
 	import MainSearch from './MainSearch.svelte';
 
 	let initialSearch = $state(false);
+
+	let { data }: PageProps = $props();
 
 	let searchVal = $state('');
 </script>
@@ -26,4 +29,6 @@
 			/>
 		</div>
 	{/if}
+
+	<div>Data len: {data.files.length}</div>
 </div>

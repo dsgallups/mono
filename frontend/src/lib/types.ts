@@ -1,6 +1,4 @@
-export type apiFile = {
-	created_at: string;
-	updated_at: string;
+export type FileResponse = {
 	id: number;
 	title: string;
 };

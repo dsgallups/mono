@@ -4,7 +4,10 @@
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::models::_entities::files::{ActiveModel, Entity, Model};
+use crate::{
+    models::_entities::files::{ActiveModel, Entity, Model},
+    views::FileResponse,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params {
@@ -23,37 +26,10 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
 }
 
 #[debug_handler]
-pub async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    format::json(Entity::find().all(&ctx.db).await?)
-}
+pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<FileResponse>>> {
+    let models = Entity::find().all(&ctx.db).await?;
 
-#[debug_handler]
-pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> Result<Response> {
-    let mut item = ActiveModel {
-        ..Default::default()
-    };
-    params.update(&mut item);
-    let item = item.insert(&ctx.db).await?;
-    format::json(item)
-}
-
-#[debug_handler]
-pub async fn update(
-    Path(id): Path<i32>,
-    State(ctx): State<AppContext>,
-    Json(params): Json<Params>,
-) -> Result<Response> {
-    let item = load_item(&ctx, id).await?;
-    let mut item = item.into_active_model();
-    params.update(&mut item);
-    let item = item.update(&ctx.db).await?;
-    format::json(item)
-}
-
-#[debug_handler]
-pub async fn remove(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
-    load_item(&ctx, id).await?.delete(&ctx.db).await?;
-    format::empty()
+    Ok(Json(models.into_iter().map(Into::into).collect()))
 }
 
 #[debug_handler]
@@ -65,9 +41,5 @@ pub fn routes() -> Routes {
     Routes::new()
         .prefix("api/files/")
         .add("/", get(list))
-        .add("/", post(add))
         .add("{id}", get(get_one))
-        .add("{id}", delete(remove))
-        .add("{id}", put(update))
-        .add("{id}", patch(update))
 }

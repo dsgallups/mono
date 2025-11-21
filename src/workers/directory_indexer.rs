@@ -1,5 +1,7 @@
+use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
 
 use crate::models::index_tasks;
 
@@ -56,6 +58,21 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             .ok_or(Error::NotFound)?;
 
         tracing::info!("Performing task {task:?}");
+
+        let (tx_event, mut rx_event) = mpsc::unbounded_channel::<IndexEvent>();
+
+        //todo: this channel will cleanup if a graceful shutdown is possible.
+        let (tx_req, rx_req) = mpsc::unbounded_channel::<IndexRequest>();
+
+        tokio::task::spawn(FileIndexer::new(task.path, rx_req).run(tx_event));
+
+        //self.ctx.
+
+        //todo: need to shut down gracefully
+        while let Some(rx) = rx_event.recv().await {
+
+            //todo
+        }
 
         // TODO: Some actual work goes here...
         Ok(())

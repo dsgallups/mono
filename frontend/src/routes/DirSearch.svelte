@@ -17,7 +17,7 @@
 		url.searchParams.set('path', value);
 		let response = await fetch(url);
 		let responseData: string[] = await response.json();
-		return ['..', ...responseData];
+		return responseData;
 	});
 </script>
 
@@ -46,6 +46,19 @@
 					<p>Loading</p>
 				{:then results}
 					<div class="flex max-h-200 flex-1 flex-col gap-2 overflow-auto">
+						<button
+							class="bg-blue-900 text-left hover:bg-blue-800"
+							onclick={() => {
+								if (value === '..' || value === '.') {
+									value = '.';
+								} else {
+									//dont need to handle the "" case
+									let split = value.split('/');
+									split.splice(split.length - 1);
+									value = split.join('/');
+								}
+							}}>Back</button
+						>
 						<!--eslint-disable-next-line svelte/require-each-key-->
 						{#each results as result}
 							<button

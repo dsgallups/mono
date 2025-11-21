@@ -1,5 +1,6 @@
 mod registration;
 mod subprocessor;
+mod tokenize;
 
 use std::{io, path::PathBuf};
 

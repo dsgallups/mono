@@ -13,7 +13,8 @@ impl FileRegistration {
         }
         // Ideally you would read the file headers here to make a determination of the file type.
         // Because I'm strapped for time, I'm only considering the extension.
-
+        //
+        // Also, nasty match pipe
         let file_bytes = match match path.extension().and_then(OsStr::to_str) {
             Some("txt") => Some(FileType::Text),
             Some("jpeg") => Some(FileType::Jpeg),

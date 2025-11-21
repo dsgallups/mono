@@ -2,4 +2,6 @@
 
 pub mod prelude;
 
+pub mod files;
+pub mod index_tasks;
 pub mod searches;

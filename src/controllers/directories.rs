@@ -7,14 +7,17 @@ use loco_rs::prelude::*;
 use serde::Deserialize;
 use tokio::fs;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Params {
     pub path: String,
 }
 
 #[debug_handler]
-pub async fn perform_indexing_task(State(ctx): State<AppContext>) {
-    //todo
+pub async fn perform_indexing_task(State(ctx): State<AppContext>, Json(params): Json<Params>) {
+    // so we could totally use a Loco worker for this task. They're set up to do this.
+    // However, for the purposes of this demo, I'm going to actually use my own async thread pool.
+
+    tracing::info!("index on params: {params:?}");
 }
 
 #[debug_handler]
@@ -36,7 +39,8 @@ pub async fn list_directory_contents(Query(params): Query<Params>) -> Result<Jso
 }
 
 pub fn routes() -> Routes {
-    Routes::new()
-        .prefix("api/directories/")
-        .add("/", get(list_directory_contents))
+    Routes::new().prefix("api/directories/").add(
+        "/",
+        get(list_directory_contents).post(perform_indexing_task),
+    )
 }

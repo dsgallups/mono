@@ -13,7 +13,7 @@
 
 	let dirSearchFocused = $state(false);
 
-	function onsubmit() {
+	function onSubmitSearch() {
 		initialSearch = false;
 
 		const url = new URL(page.url);
@@ -22,7 +22,21 @@
 		goto(url, { replaceState: true, noScroll: true });
 	}
 
-	$inspect('data len: ', data.files.length);
+	async function onSubmitDirSearch(value: string) {
+		initialSearch = false;
+		console.log('submitting value ', value);
+		const url = new URL('/api/directories', page.url);
+
+		await fetch(url, {
+			method: `POST`,
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				path: value
+			})
+		});
+	}
 </script>
 
 <div class="flex">
@@ -38,20 +52,18 @@
 						console.log('blurin');
 						dirSearchFocused = false;
 					}}
-					onsubmit={() => {
-						console.log('yeah');
-					}}
+					onsubmit={onSubmitDirSearch}
 				/>
 				{#if !dirSearchFocused}
 					<div>
-						<MainSearch bind:value={searchVal} {onsubmit} />
+						<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
 					</div>
 				{/if}
 			</div>
 		</div>
 	{:else}
 		<div class="flex p-5">
-			<MainSearch bind:value={searchVal} {onsubmit} />
+			<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
 		</div>
 	{/if}
 </div>

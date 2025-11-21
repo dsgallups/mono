@@ -2,33 +2,29 @@
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
 use loco_rs::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
-    models::_entities::files::{ActiveModel, Entity, Model},
+    models::_entities::files::{Entity, Model},
     views::FileResponse,
 };
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Params {
-    pub title: String,
-}
-
-impl Params {
-    fn update(&self, item: &mut ActiveModel) {
-        item.title = Set(self.title.clone());
-    }
-}
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
     let item = Entity::find_by_id(id).one(&ctx.db).await?;
     item.ok_or_else(|| Error::NotFound)
 }
+#[derive(Deserialize, Debug)]
+pub struct Params {
+    q: Option<String>,
+}
 
 #[debug_handler]
-pub async fn list(State(_ctx): State<AppContext>) -> Result<Json<Vec<FileResponse>>> {
+pub async fn list(
+    State(_ctx): State<AppContext>,
+    Query(params): Query<Params>,
+) -> Result<Json<Vec<FileResponse>>> {
     // let models = Entity::find().all(&ctx.db).await?;
-
+    tracing::info!("params: {params:?}");
     // Ok(Json(models.into_iter().map(Into::into).collect()))
 
     let files = vec![

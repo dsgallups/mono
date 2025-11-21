@@ -11,14 +11,14 @@ pub struct Params {
     pub path: String,
     pub progress: i32,
     pub queue: serde_json::Value,
-    }
+}
 
 impl Params {
     fn update(&self, item: &mut ActiveModel) {
-      item.path = Set(self.path.clone());
-      item.progress = Set(self.progress);
-      item.queue = Set(self.queue.clone());
-      }
+        item.path = Set(self.path.clone());
+        item.progress = Set(self.progress);
+        item.queue = Set(self.queue.clone());
+    }
 }
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {

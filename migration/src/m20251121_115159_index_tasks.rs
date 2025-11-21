@@ -7,18 +7,18 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, m: &SchemaManager) -> Result<(), DbErr> {
-        create_table(m, "index_tasks",
+        create_table(
+            m,
+            "index_tasks",
             &[
-            
-            ("id", ColType::PkAuto),
-            
-            ("path", ColType::String),
-            ("progress", ColType::Integer),
-            ("queue", ColType::Json),
+                ("id", ColType::PkAuto),
+                ("path", ColType::String),
+                ("progress", ColType::Integer),
+                ("queue", ColType::Json),
             ],
-            &[
-            ]
-        ).await
+            &[],
+        )
+        .await
     }
 
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {

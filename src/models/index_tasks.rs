@@ -1,5 +1,5 @@
+pub use super::_entities::index_tasks::{ActiveModel, Entity, Model};
 use sea_orm::entity::prelude::*;
-pub use super::_entities::index_tasks::{ActiveModel, Model, Entity};
 pub type IndexTasks = Entity;
 
 #[async_trait::async_trait]

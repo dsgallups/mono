@@ -4,7 +4,7 @@
 	import type { PageProps } from './$types';
 	import MainSearch from './MainSearch.svelte';
 
-	let initialSearch = $state(false);
+	let initialSearch = $state(true);
 
 	let { data }: PageProps = $props();
 
@@ -18,18 +18,21 @@
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(url, { replaceState: true, noScroll: true });
 	}
+
+	$inspect('data len: ', data.files.length);
 </script>
 
 <div class="flex">
 	{#if initialSearch}
 		<div class="flex items-center justify-center p-5">
-			<MainSearch bind:value={searchVal} {onsubmit} />
+			<div class="flex flex-col gap-2">
+				<MainSearch bind:value={searchVal} {onsubmit} />
+				<MainSearch bind:value={searchVal} {onsubmit} />
+			</div>
 		</div>
 	{:else}
 		<div class="flex p-5">
 			<MainSearch bind:value={searchVal} {onsubmit} />
 		</div>
 	{/if}
-
-	<div>Data len: {data.files.length}</div>
 </div>

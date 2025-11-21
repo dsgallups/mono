@@ -39,7 +39,7 @@
 	async function onSubmitDirSearch(value: string) {
 		initialSearch = false;
 		console.log('submitting value ', value);
-		const url = new URL('/api/directories', page.url);
+		const url = new URL('/api/index_tasks', page.url);
 
 		await fetch(url, {
 			method: `POST`,

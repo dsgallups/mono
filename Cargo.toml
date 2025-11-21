@@ -1,4 +1,5 @@
 [workspace]
+members = ["file_indexer"]
 
 [package]
 name = "mono"
@@ -13,6 +14,7 @@ default-run = "mono-cli"
 loco-rs = { version = "0.16" }
 
 [dependencies]
+file_indexer = {path = "file_indexer"}
 loco-rs = { workspace = true  }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }

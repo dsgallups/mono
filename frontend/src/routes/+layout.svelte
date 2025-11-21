@@ -9,4 +9,9 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+<div class="flex h-dvh w-dvw flex-1 flex-col items-center">
+	<h1 class="text-4xl">Mono</h1>
+	<div class="flex flex-1">
+		{@render children()}
+	</div>
+</div>

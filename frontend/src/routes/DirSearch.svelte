@@ -9,7 +9,7 @@
 
 	let { onfocus, onblur, onsubmit }: Props = $props();
 
-	let value = $state('..');
+	let value = $state('');
 
 	let searchResults = $derived(async () => {
 		console.log('here');

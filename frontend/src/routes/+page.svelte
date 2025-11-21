@@ -1,14 +1,29 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import type { PageProps } from './$types';
+	import { SvelteURL } from 'svelte/reactivity';
 	import DirSearch from './DirSearch.svelte';
 	import MainSearch from './MainSearch.svelte';
+	import type { FileResponse } from '$lib/types';
 
 	let initialSearch = $state(true);
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let { data }: PageProps = $props();
+	let apiUrl = new SvelteURL('/api/files', page.url);
+	let data = $derived.by(async () => {
+		let qParams = apiUrl.searchParams.get('q');
+		if (!qParams) {
+			return {
+				files: []
+			};
+		}
+		const result = await fetch(apiUrl);
+		const files: FileResponse[] = await result.json();
+		return {
+			files
+		};
+	});
+	// eslint-disable-next-line svelte/no-inspect
+	$inspect(data);
 
 	let searchVal = $state('');
 

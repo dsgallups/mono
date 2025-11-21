@@ -9,12 +9,12 @@ use crate::models::_entities::searches::{ActiveModel, Entity, Model};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params {
     pub query: String,
-    }
+}
 
 impl Params {
     fn update(&self, item: &mut ActiveModel) {
-      item.query = Set(self.query.clone());
-      }
+        item.query = Set(self.query.clone());
+    }
 }
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {

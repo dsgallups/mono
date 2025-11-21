@@ -1,5 +1,5 @@
+pub use super::_entities::searches::{ActiveModel, Entity, Model};
 use sea_orm::entity::prelude::*;
-pub use super::_entities::searches::{ActiveModel, Model, Entity};
 pub type Searches = Entity;
 
 #[async_trait::async_trait]

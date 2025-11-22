@@ -4,10 +4,18 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_segmentation::UnicodeSegmentation;
 
 /*
-Running Strategy -
+Initial idea:
 
 text files: tokenize    -> normalize    -> TF-IDF -> cosine distance -> Cluster and Rank
 jpeg:          CLIP     -> normalize    -> TF-IDF -> cosine-distance -> Cluster and Rank
+
+
+Revisions
+
+- Semantic search + chunking with BERT
+
+
+Nevermind. we're going for a semantic search with an embedding with either BERT or word2vec
  */
 pub fn process_text(text: &str) {
     let tokenize_and_normalize =

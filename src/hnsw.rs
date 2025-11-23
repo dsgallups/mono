@@ -1,18 +1,27 @@
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock;
 
 use hnsw_rs::{hnsw::Hnsw, prelude::DistCosine};
-use tokio::sync::RwLock;
+
+pub struct NewEmbed<'a> {
+    pub id: usize,
+    pub embeds: &'a [f32],
+}
 
 pub struct EmbedDb {
-    hnsw: Arc<RwLock<Hnsw<'static, f32, DistCosine>>>,
+    hnsw: Hnsw<'static, f32, DistCosine>,
+}
+impl EmbedDb {
+    pub fn insert(&self, embeds: Vec<NewEmbed>) {
+        for embed in embeds {
+            self.hnsw.insert((embed.embeds, embed.id));
+        }
+    }
 }
 
 impl Default for EmbedDb {
     fn default() -> Self {
         let hnsw: Hnsw<f32, DistCosine> = Hnsw::new(32, 100000, 16, 200, DistCosine);
-        Self {
-            hnsw: Arc::new(RwLock::new(hnsw)),
-        }
+        Self { hnsw }
     }
 }
 

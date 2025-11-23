@@ -1,10 +1,12 @@
-use axum::extract::ConnectInfo;
 use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use crate::models::{file_chunks, files, index_tasks};
+use crate::{
+    hnsw::{NewEmbed, EMBED_DB},
+    models::{file_chunks, files, index_tasks},
+};
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -63,7 +65,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
         let (tx_event, mut rx_event) = mpsc::unbounded_channel::<IndexEvent>();
 
         //todo: this channel will cleanup if a graceful shutdown is possible.
-        let (tx_req, rx_req) = mpsc::unbounded_channel::<IndexRequest>();
+        let (_tx_req, rx_req) = mpsc::unbounded_channel::<IndexRequest>();
 
         tokio::task::spawn(FileIndexer::new(task.path, rx_req).run(tx_event));
 
@@ -109,7 +111,9 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 continue;
             };
 
-            for embed in embeddings {
+            let mut new_embeds = Vec::with_capacity(embeddings.len());
+
+            for embed in embeddings.iter() {
                 let file_chunk = file_chunks::ActiveModel {
                     content: Set("".to_string()),
                     file_id: Set(model.id),
@@ -118,25 +122,15 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 .insert(&self.ctx.db)
                 .await
                 .unwrap();
+                new_embeds.push(NewEmbed {
+                    id: file_chunk.id as usize,
+                    embeds: embed,
+                });
             }
 
-            //read it
-
-            // match new_registration.file_type {
-            //     FileMeta::Text => {
-
-            //         //todo
-            //     }
-            //     FileMeta::Jpeg => {
-            //         todo!()
-            //     }
-            //     FileMeta::Unknown => {
-            //         todo!()
-            //     }
-            // }
+            EMBED_DB.insert(new_embeds);
         }
 
-        // TODO: Some actual work goes here...
         Ok(())
     }
 }

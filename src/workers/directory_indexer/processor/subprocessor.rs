@@ -15,7 +15,9 @@ pub async fn process(
             channel.send(IndexEvent::Register(registration))?;
         }
         Err(FileRegError { path, err_type }) => match err_type {
-            FileRegErrorType::Directory => {}
+            FileRegErrorType::Directory => {
+                channel.send(IndexEvent::FinishedWithNoop);
+            }
             FileRegErrorType::Embedding => {
                 channel.send(IndexEvent::EmbeddingFailure(path))?;
             }

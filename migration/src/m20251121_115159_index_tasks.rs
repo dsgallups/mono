@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                 ("id", ColType::PkAuto),
                 ("path", ColType::String),
                 ("progress", ColType::Integer),
-                ("queue", ColType::Json),
+                ("queue", ColType::String),
             ],
             &[],
         )

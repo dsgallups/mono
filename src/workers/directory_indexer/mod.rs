@@ -65,25 +65,45 @@ impl BackgroundWorker<WorkerArgs> for Worker {
         let (tx_event, mut rx_event) = mpsc::unbounded_channel::<IndexEvent>();
 
         //todo: FileIndexer could be shutdown gracefully.
+        tokio::task::spawn(FileIndexer::new(task.path.clone()).run(tx_event));
 
-        tokio::task::spawn(FileIndexer::new(task.path).run(tx_event));
+        let mut entry_count = None;
+        let mut entries_processed = 0;
 
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
             let new_registration = match rx {
                 IndexEvent::AccessError(_io) => {
+                    entries_processed += 1;
                     //you would do something like save this error, etc.
                     continue;
                 }
+                IndexEvent::FinishedWithNoop => {
+                    entries_processed += 1;
+                    continue;
+                }
+                IndexEvent::DirectoryWalked(count) => {
+                    entry_count = Some(count);
+                    continue;
+                }
                 IndexEvent::Read { path: _, err: _ } => {
+                    entries_processed += 1;
                     //something else
                     continue;
                 }
                 IndexEvent::EmbeddingFailure(_path) => {
+                    entries_processed += 1;
                     continue;
                 }
                 IndexEvent::Register(file) => file,
             };
+
+            entries_processed += 1;
+            let mut task_am = task.clone().into_active_model();
+            if let Some(entry_count) = entry_count {
+                task_am.progress = Set((entries_processed as f32 / entry_count as f32) as i32);
+            }
+            //task_am.queue = Set(new_registration.path.to_string_lossy().into_owned());
 
             //yes, bad. I know. Hope you don't run this on windows
             let path = new_registration.path.to_string_lossy().into_owned();

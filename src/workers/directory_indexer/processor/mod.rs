@@ -19,12 +19,18 @@ impl From<SendError<IndexEvent>> for FileIndexError {
     }
 }
 #[derive(Debug)]
-#[expect(dead_code)]
 pub enum IndexEvent {
     AccessError(walkdir::Error),
-    Read { path: PathBuf, err: io::Error },
+    FinishedWithNoop,
+    Read {
+        path: PathBuf,
+        err: io::Error,
+    },
     EmbeddingFailure(PathBuf),
     Register(FileRegistration),
+    /// The contents of the directory have been identified and split into
+    /// new async threads
+    DirectoryWalked(u32),
 }
 
 /// TODO: keep a cache of already indexed files for the subprocessor to avoid
@@ -40,6 +46,7 @@ impl FileIndexer {
     pub async fn run(self, channel: UnboundedSender<IndexEvent>) -> Result<(), FileIndexError> {
         let input = WalkDir::new(self.path);
 
+        let mut entry_count = 0;
         for entry in input {
             let entry = match entry {
                 Ok(entry) => entry,
@@ -48,8 +55,10 @@ impl FileIndexer {
                     continue;
                 }
             };
+            entry_count += 1;
             tokio::task::spawn(subprocessor::process(entry, channel.clone()));
         }
+        channel.send(IndexEvent::DirectoryWalked(entry_count))?;
         Ok(())
     }
 }

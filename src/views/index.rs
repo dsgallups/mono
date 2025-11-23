@@ -9,7 +9,7 @@ pub struct IndexResponse {
     pub updated_at: DateTimeWithTimeZone,
     pub id: i32,
     pub path: String,
-    pub progress: i32,
+    pub progress: f32,
     pub queue: String,
 }
 impl From<index_tasks::Model> for IndexResponse {

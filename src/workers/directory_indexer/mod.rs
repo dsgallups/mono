@@ -101,7 +101,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             entries_processed += 1;
             let mut task_am = task.clone().into_active_model();
             if let Some(entry_count) = entry_count {
-                task_am.progress = Set((entries_processed as f32 / entry_count as f32) as i32);
+                task_am.progress = Set(entries_processed as f32 / entry_count as f32);
             }
             task_am.queue = Set(new_registration.path.to_string_lossy().into_owned());
             _ = task_am.update(&self.ctx.db).await;

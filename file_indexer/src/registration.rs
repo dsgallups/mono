@@ -6,7 +6,7 @@ use std::{
 };
 
 use embed_db::TextEmbedder;
-use tokio::sync::Semaphore;
+use tokio::{fs, sync::Semaphore};
 
 static EMBEDDER: LazyLock<Arc<Mutex<TextEmbedder>>> =
     LazyLock::new(|| Arc::new(Mutex::new(TextEmbedder::new().unwrap())));
@@ -20,7 +20,7 @@ static OPEN_BYTES_SEM: Semaphore = Semaphore::const_new(MAX_PERMITS);
 #[derive(Debug)]
 pub struct FileRegistration {
     pub path: PathBuf,
-    pub file_bytes: FileBytes,
+    pub file_bytes: FileEmbeddings,
 }
 
 impl FileRegistration {
@@ -32,48 +32,80 @@ impl FileRegistration {
         // Because I'm strapped for time, I'm only considering the extension.
         //
         // Also, nasty match pipe
-        let file_bytes = match match path.extension().and_then(OsStr::to_str) {
+        let file_type = match path.extension().and_then(OsStr::to_str) {
             Some("txt") => Some(FileType::Text),
             Some("jpeg") => Some(FileType::Jpeg),
             _ => None,
-        } {
-            Some(file_type) => file_type.into_file_bytes(
-                tokio::fs::read(&path)
-                    .await
-                    .map_err(|e| FileRegError::io(path.clone(), e))?,
-            ),
-            None => {
-                return Ok(Self {
-                    path,
-                    file_bytes: FileBytes::Unknown,
-                });
+        };
+
+        let Some(file_type) = file_type else {
+            return Ok(Self {
+                path,
+                file_bytes: FileEmbeddings::Unknown,
+            });
+        };
+
+        let mut _permit = None;
+
+        match fs::metadata(&path).await {
+            Ok(metadata) => {
+                let length = metadata.len();
+                let needed = length.div_ceil(BYTES_PER_PERMIT);
+                _permit = Some(OPEN_BYTES_SEM.acquire_many(needed as u32).await.unwrap());
+            }
+            Err(e) => {
+                return Err(FileRegError::io(path, e));
+            }
+        }
+        // We will process entire files altogether. There is probably
+        // a better implementation with buffering, but I assumed in my
+        // embedder that all file chunks are available instantly.
+        let prompt = match file_type {
+            FileType::Text => fs::read_to_string(&path)
+                .await
+                .map_err(|e| FileRegError::io(path.clone(), e))?,
+            FileType::Jpeg => {
+                todo!("Will use CLIP on JPEGs")
             }
         };
 
-        Ok(Self { path, file_bytes })
+        let embeddings = {
+            let mut embedder = EMBEDDER.lock().unwrap();
+            embedder
+                .chunk_embed(&prompt)
+                .map_err(|_e| FileRegError::embedding(path.clone()))?
+        };
+
+        let file_embeddings = file_type.into_file_bytes(embeddings);
+
+        Ok(Self {
+            path,
+            file_bytes: file_embeddings,
+        })
     }
 }
 
+#[derive(Clone, Copy)]
 enum FileType {
     Text,
     Jpeg,
 }
 impl FileType {
-    pub fn into_file_bytes(self, bytes: Vec<u8>) -> FileBytes {
+    pub fn into_file_bytes(self, embeddings: Vec<Vec<f32>>) -> FileEmbeddings {
         match self {
-            FileType::Text => FileBytes::Text(bytes),
-            FileType::Jpeg => FileBytes::Jpeg(bytes),
+            FileType::Text => FileEmbeddings::Text(embeddings),
+            FileType::Jpeg => FileEmbeddings::Jpeg(embeddings),
         }
     }
 }
 
 #[derive(Debug)]
-pub enum FileBytes {
-    Text(Vec<u8>),
-    Jpeg(Vec<u8>),
+pub enum FileEmbeddings {
+    Text(Vec<Vec<f32>>),
+    Jpeg(Vec<Vec<f32>>),
     Unknown,
 }
-impl FileBytes {}
+impl FileEmbeddings {}
 
 pub struct FileRegError {
     pub path: PathBuf,
@@ -86,6 +118,13 @@ impl FileRegError {
             err_type: FileRegErrorType::Directory,
         }
     }
+
+    fn embedding(path: PathBuf) -> Self {
+        Self {
+            path,
+            err_type: FileRegErrorType::Embedding,
+        }
+    }
     fn io(path: PathBuf, err: io::Error) -> Self {
         Self {
             path,
@@ -96,5 +135,6 @@ impl FileRegError {
 
 pub enum FileRegErrorType {
     Directory,
+    Embedding,
     Io(io::Error),
 }

@@ -33,6 +33,7 @@ pub enum IndexEvent {
         path: PathBuf,
         err: io::Error,
     },
+    EmbeddingFailure(PathBuf),
     Register(FileRegistration),
     /// The contents of the directory have been identified and split into
     /// new async threads

@@ -1,3 +1,4 @@
+use axum::extract::ConnectInfo;
 use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -78,6 +79,9 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 }
                 IndexEvent::Read { path: _, err: _ } => {
                     //something else
+                    continue;
+                }
+                IndexEvent::EmbeddingFailure(_path) => {
                     continue;
                 }
                 IndexEvent::Register(file) => file,

@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, io, path::PathBuf};
 
-use embed_db::EMBEDDER;
+use embed_db::{Chunk, EMBEDDER};
 use tokio::{fs, sync::Semaphore};
 
 const GIGS_ALLOWED: u64 = 8;
@@ -83,7 +83,7 @@ enum FileType {
     Jpeg,
 }
 impl FileType {
-    pub fn into_file_bytes(self, embeddings: Vec<Vec<f32>>) -> FileEmbeddings {
+    pub fn into_file_bytes(self, embeddings: Vec<Chunk>) -> FileEmbeddings {
         match self {
             FileType::Text => FileEmbeddings::Text(embeddings),
             FileType::Jpeg => FileEmbeddings::Jpeg(embeddings),
@@ -93,12 +93,12 @@ impl FileType {
 
 #[derive(Debug)]
 pub enum FileEmbeddings {
-    Text(Vec<Vec<f32>>),
-    Jpeg(Vec<Vec<f32>>),
+    Text(Vec<Chunk>),
+    Jpeg(Vec<Chunk>),
     Unknown,
 }
 impl FileEmbeddings {
-    pub fn embeddings(&self) -> Option<&[Vec<f32>]> {
+    pub fn chunks(&self) -> Option<&[Chunk]> {
         match self {
             FileEmbeddings::Jpeg(v) | FileEmbeddings::Text(v) => Some(v.as_slice()),
             FileEmbeddings::Unknown => None,

@@ -23,7 +23,7 @@ fn main() -> Result<()> {
     let mut embedded = TextEmbedder::new()?;
     for (id, prompt) in prompts.iter().enumerate() {
         let embeds = embedded.chunk_embed(prompt)?;
-        hnsw.insert((&embeds[0], id));
+        hnsw.insert((&embeds[0].embeddings, id));
     }
 
     let prompt_embed = embedded.naive_embed("Social Media")?.squeeze(0)?;

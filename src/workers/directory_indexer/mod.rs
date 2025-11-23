@@ -107,7 +107,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             else {
                 continue;
             };
-            let Some(embeddings) = new_registration.contents.embeddings() else {
+            let Some(embeddings) = new_registration.contents.chunks() else {
                 continue;
             };
 
@@ -115,7 +115,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
             for embed in embeddings.iter() {
                 let file_chunk = file_chunks::ActiveModel {
-                    content: Set("".to_string()),
+                    content: Set(embed.text().to_string()),
                     file_id: Set(model.id),
                     ..Default::default()
                 }
@@ -125,7 +125,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
                 new_embeds.push(NewEmbed {
                     id: file_chunk.id as usize,
-                    embeds: embed,
+                    embeds: embed.embeddings(),
                 });
             }
             EMBED_DB.insert(new_embeds);

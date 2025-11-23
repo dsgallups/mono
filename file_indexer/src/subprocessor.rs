@@ -14,7 +14,7 @@ pub async fn process(
 ) -> Result<(), FileIndexError> {
     match FileRegistration::new(entry.into_path()).await {
         Ok(registration) => {
-            channel.send(IndexEvent::Register(registration));
+            channel.send(IndexEvent::Register(registration))?;
             Ok(())
         }
         Err(FileRegError { path, err_type }) => match err_type {

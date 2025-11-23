@@ -55,7 +55,6 @@ impl FileIndexer {
     }
     /// MUST be called in a tokio runtime :)
     pub async fn run(self, channel: UnboundedSender<IndexEvent>) -> Result<(), FileIndexError> {
-        //let
         let input = WalkDir::new(self.path);
 
         for entry in input {

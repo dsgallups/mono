@@ -20,3 +20,6 @@ target/
 
 *.sqlite
 *.sqlite-*
+
+# Big files
+*.safetensors

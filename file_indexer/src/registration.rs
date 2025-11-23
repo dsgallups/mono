@@ -2,8 +2,8 @@ use std::{ffi::OsStr, io, path::PathBuf};
 
 #[derive(Debug)]
 pub struct FileRegistration {
-    path: PathBuf,
-    file_bytes: FileBytes,
+    pub path: PathBuf,
+    pub file_type: FileMeta,
 }
 
 impl FileRegistration {
@@ -11,52 +11,31 @@ impl FileRegistration {
         if !path.is_file() {
             return Err(FileRegError::dir(path));
         }
-        // Ideally you would read the file headers here to make a determination of the file type.
-        // Because I'm strapped for time, I'm only considering the extension.
+        // Ideally you would read the file headers, check metadata, etc.
+        // to make a determination of the file type.
         //
-        // Also, nasty match pipe
-        let file_bytes = match match path.extension().and_then(OsStr::to_str) {
-            Some("txt") => Some(FileType::Text),
-            Some("jpeg") => Some(FileType::Jpeg),
-            _ => None,
-        } {
-            Some(file_type) => file_type.into_file_bytes(
-                tokio::fs::read(&path)
-                    .await
-                    .map_err(|e| FileRegError::io(path.clone(), e))?,
-            ),
-            None => {
-                return Ok(Self {
-                    path,
-                    file_bytes: FileBytes::Unknown,
-                });
-            }
+        // You would do some prepreocessing here, but I also wanted to consider that this demo
+        // probably shouldn't consume all your ram.
+        //
+        // I might come back to this if I have time.
+        //
+        // I could've used a semaphore, but eh.
+        let file_type = match path.extension().and_then(OsStr::to_str) {
+            Some("txt") => FileMeta::Text,
+            Some("jpeg") => FileMeta::Jpeg,
+            _ => FileMeta::Unknown,
         };
 
-        Ok(Self { path, file_bytes })
-    }
-}
-
-enum FileType {
-    Text,
-    Jpeg,
-}
-impl FileType {
-    pub fn into_file_bytes(self, bytes: Vec<u8>) -> FileBytes {
-        match self {
-            FileType::Text => FileBytes::Text(bytes),
-            FileType::Jpeg => FileBytes::Jpeg(bytes),
-        }
+        Ok(Self { path, file_type })
     }
 }
 
 #[derive(Debug)]
-pub enum FileBytes {
-    Text(Vec<u8>),
-    Jpeg(Vec<u8>),
+pub enum FileMeta {
+    Text,
+    Jpeg,
     Unknown,
 }
-impl FileBytes {}
 
 pub struct FileRegError {
     pub path: PathBuf,
@@ -69,6 +48,7 @@ impl FileRegError {
             err_type: FileRegErrorType::Directory,
         }
     }
+    #[expect(dead_code)]
     fn io(path: PathBuf, err: io::Error) -> Self {
         Self {
             path,

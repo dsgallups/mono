@@ -1,4 +1,4 @@
-use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
+use file_indexer::{FileIndexer, FileMeta, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -70,8 +70,32 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
+            let new_registration = match rx {
+                IndexEvent::AccessError(_io) => {
+                    //you would do something like save this error, etc.
+                    continue;
+                }
+                IndexEvent::DirectoryWalked => {
+                    continue;
+                }
+                IndexEvent::Read { path: _, err: _ } => {
+                    //something else
+                    continue;
+                }
+                IndexEvent::Register(file) => file,
+            };
 
-            //todo
+            match new_registration.file_type {
+                FileMeta::Text => {
+                    //todo
+                }
+                FileMeta::Jpeg => {
+                    todo!()
+                }
+                FileMeta::Unknown => {
+                    todo!()
+                }
+            }
         }
 
         // TODO: Some actual work goes here...

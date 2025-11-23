@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use tokio::sync::mpsc::UnboundedSender;
 use walkdir::DirEntry;
 

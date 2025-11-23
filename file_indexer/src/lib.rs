@@ -1,4 +1,5 @@
 mod registration;
+pub use registration::*;
 mod subprocessor;
 mod tokenize;
 
@@ -10,8 +11,6 @@ use tokio::sync::{
     oneshot,
 };
 use walkdir::WalkDir;
-
-use crate::registration::FileRegistration;
 
 pub enum IndexRequest {
     Close(oneshot::Sender<Vec<IndexEvent>>),

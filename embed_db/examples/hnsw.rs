@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use anyhow::Result;
 use embed_db::*;
 use hnsw_rs::prelude::*;
@@ -34,6 +36,8 @@ fn main() -> Result<()> {
         let prompt = prompts[id];
         println!("{}, {}", 1. - neighbor.distance, prompt);
     }
+    let path = PathBuf::from("vector_db");
+    hnsw.file_dump(&path, "doc_graph")?;
 
     Ok(())
 }

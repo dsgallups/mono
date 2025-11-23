@@ -1,6 +1,9 @@
 mod embedder;
+mod vector_db;
 use candle_core::Tensor;
 pub use embedder::*;
+
+const FILE_DUMP: &str = "hnsw";
 
 use anyhow::Result;
 

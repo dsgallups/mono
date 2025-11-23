@@ -24,3 +24,28 @@ impl From<files::Model> for FileResponse {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct FileChunk {
+    pub content: String,
+    pub similarity: f32,
+}
+
+#[derive(Serialize)]
+pub struct FileSimilarity {
+    pub id: i32,
+    pub title: String,
+    pub path: String,
+    pub chunks: Vec<FileChunk>,
+}
+
+impl From<files::Model> for FileSimilarity {
+    fn from(value: files::Model) -> Self {
+        Self {
+            id: value.id,
+            title: value.title,
+            path: value.path,
+            chunks: Vec::new(),
+        }
+    }
+}

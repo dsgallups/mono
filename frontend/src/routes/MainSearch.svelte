@@ -2,8 +2,9 @@
 	interface Props {
 		value: string;
 		onsubmit: () => void;
+		onkeyup?: () => void;
 	}
-	let { value = $bindable(), onsubmit }: Props = $props();
+	let { value = $bindable(), onsubmit, onkeyup }: Props = $props();
 </script>
 
 <div>
@@ -14,6 +15,8 @@
 		onkeyup={(e) => {
 			if (e.key === 'Enter') {
 				onsubmit();
+			} else {
+				onkeyup?.();
 			}
 		}}
 	/>

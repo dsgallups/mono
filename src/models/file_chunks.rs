@@ -1,4 +1,4 @@
-pub use super::_entities::file_chunks::{ActiveModel, Entity, Model};
+pub use super::_entities::file_chunks::{ActiveModel, Column, Entity, Model};
 use sea_orm::entity::prelude::*;
 pub type FileChunks = Entity;
 

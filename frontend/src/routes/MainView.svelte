@@ -3,7 +3,8 @@
 	import { page } from '$app/state';
 	import { SvelteURL } from 'svelte/reactivity';
 	import MainSearch from './MainSearch.svelte';
-	import type { FileResponse } from '$lib/types';
+	import type { FileSimilarity } from '$lib/types';
+	import { onMount } from 'svelte';
 
 	let searchVal = $state('');
 	//let initialSearch = $state(true);
@@ -18,21 +19,33 @@
 	}
 
 	let apiUrl = new SvelteURL('/api/files', page.url);
-	let data = $derived.by(async () => {
-		let qParams = apiUrl.searchParams.get('q');
-		if (!qParams) {
-			return {
-				files: []
-			};
-		}
-		const result = await fetch(apiUrl);
-		const files: FileResponse[] = await result.json();
-		return {
-			files
-		};
+	let fileResponse: FileSimilarity[] = $state([]);
+
+	onMount(async () => {
+		queryFiles();
 	});
+
+	async function queryFiles() {
+		apiUrl.searchParams.set('q', searchVal);
+		const result = await fetch(apiUrl);
+		const files: FileSimilarity[] = await result.json();
+		fileResponse = files;
+	}
 </script>
 
-<div class="flex p-5">
-	<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
+<div class="wrap flex flex-col p-5">
+	<MainSearch
+		bind:value={searchVal}
+		onsubmit={onSubmitSearch}
+		onkeyup={() => {
+			queryFiles();
+		}}
+	/>
+	<div>
+		{#each fileResponse as file (file.id)}
+			<div class="flex shrink border border-stone-400">
+				<p>{file.title}</p>
+			</div>
+		{/each}
+	</div>
 </div>

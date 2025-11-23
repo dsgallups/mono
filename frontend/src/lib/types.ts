@@ -11,3 +11,14 @@ export type IndexResponse = {
 	progress: number;
 	queue: string;
 };
+export type FileSimilarity = {
+	id: number;
+	title: string;
+	path: string;
+	chunks: FileChunk[];
+};
+
+export type FileChunk = {
+	content: string;
+	similarity: number;
+};

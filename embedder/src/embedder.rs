@@ -1,18 +1,49 @@
-use anyhow::Result;
-use candle_core::Device;
-use candle_transformers::models::t5::T5EncoderModel;
+use anyhow::{Error, Result};
+use candle_core::{DType, Device};
+use candle_nn::VarBuilder;
+use candle_transformers::models::{
+    bert::{BertModel, Config},
+    t5::T5EncoderModel,
+};
+use hf_hub::{Repo, RepoType, api::sync::Api};
 use tokenizers::Tokenizer;
 
-pub struct GtrT5Embedder {
+pub struct MiniLMEmbedder {
     tokenizer: Tokenizer,
-    model: T5EncoderModel,
+    model: BertModel,
     device: Device,
 }
 
-impl GtrT5Embedder {
-    pub fn new(path: &str) -> Result<Self> {
+impl MiniLMEmbedder {
+    pub fn new() -> Result<Self> {
         let device = Device::new_cuda(0)?;
 
-        todo!()
+        let model_id = "sentence-transformers/all-MiniLM-L6-v2".to_string();
+        let revision = "refs/pr/21".to_string();
+
+        let repo = Repo::with_revision(model_id, RepoType::Model, revision);
+        let (config_filename, tokenizer_filename, weights_filename) = {
+            let api = Api::new()?;
+            let api = api.repo(repo);
+            let config = api.get("config.json")?;
+            let tokenizer = api.get("tokenizer.json")?;
+            let weights = api.get("model.safetensors")?;
+
+            (config, tokenizer, weights)
+        };
+        let config = std::fs::read_to_string(config_filename)?;
+        let config: Config = serde_json::from_str(&config)?;
+        let tokenizer = Tokenizer::from_file(tokenizer_filename).map_err(Error::msg)?;
+
+        let vb = unsafe {
+            VarBuilder::from_mmaped_safetensors(&[weights_filename], DType::F32, &device)?
+        };
+        let model = BertModel::load(vb, &config)?;
+        let this = Self {
+            tokenizer,
+            model,
+            device,
+        };
+        Ok(this)
     }
 }

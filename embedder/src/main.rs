@@ -10,8 +10,6 @@ use anyhow::Result;
 //se burn::prelude::Backend;
 
 fn main() -> Result<()> {
-    let model_path = "model.safetensors";
-
-    let embedder = GtrT5Embedder::new(model_path)?;
+    let embedder = MiniLMEmbedder::new()?;
     Ok(())
 }

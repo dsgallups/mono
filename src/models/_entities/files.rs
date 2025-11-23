@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub title: String,
+    pub path: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

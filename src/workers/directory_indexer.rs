@@ -3,7 +3,7 @@ use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use crate::models::index_tasks;
+use crate::models::{files, index_tasks};
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -85,8 +85,12 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 IndexEvent::Register(file) => file,
             };
 
+            let model = files::ActiveModel {
+                ..Default::default()
+            };
             match new_registration.file_type {
                 FileMeta::Text => {
+
                     //todo
                 }
                 FileMeta::Jpeg => {

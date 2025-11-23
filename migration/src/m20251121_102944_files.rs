@@ -10,7 +10,12 @@ impl MigrationTrait for Migration {
         create_table(
             m,
             "files",
-            &[("id", ColType::PkAuto), ("title", ColType::String)],
+            &[
+                ("id", ColType::PkAuto),
+                ("title", ColType::String),
+                //This is obviously bad, should be raw bytes, but yknow. time.
+                ("path", ColType::String),
+            ],
             &[],
         )
         .await

@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
 
     let mut tensor_results = Vec::with_capacity(prompts.len());
     for prompt in prompts {
-        let res = embedder.embed(prompt)?;
+        let res = embedder.naive_embed(prompt)?;
         tensor_results.push((prompt, res));
     }
 

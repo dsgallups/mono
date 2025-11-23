@@ -51,7 +51,7 @@ impl TextEmbedder {
         Ok(this)
     }
 
-    pub fn better_embed(&mut self, val: &str) -> Result<Tensor> {
+    pub fn chunk_embed(&mut self, val: &str) -> Result<Vec<Vec<f32>>> {
         let tokens = self.tokenizer.encode(val, true).map_err(Error::msg)?;
 
         // Here, we're going to basically have a chunking length of 300 tokens.
@@ -66,29 +66,46 @@ impl TextEmbedder {
         let overlap = 50;
         let stride = chunk_len - overlap;
 
-        let mut chunked_len = Vec::with_capacity(ids.len().div_ceil(chunk_len));
-        let mut start = 0usize;
+        let mut full_chunks = Vec::with_capacity(ids.len() / chunk_len);
+        let mut end_chunk = None;
+        let mut start = 0;
         while start < ids.len() {
-            let end = (start + chunk_len).min(ids.len());
-            chunked_len.push(ids[start..end].to_vec());
-            if end == ids.len() {
+            println!("here, start: {start}");
+            let end = start + chunk_len;
+            if end > ids.len() {
+                end_chunk = Some(ids[start..ids.len()].to_vec());
+                println!("yo");
                 break;
+            } else {
+                full_chunks.push(ids[start..end].to_vec());
+                start += stride;
             }
-            start += stride;
         }
 
-        let tokens = Tensor::new(ids, &self.device)?.unsqueeze(0)?;
+        let mut embeddings = Vec::new();
+        if !full_chunks.is_empty() {
+            let bsz = full_chunks.len();
+            let flat = full_chunks.into_iter().flatten().collect::<Vec<_>>();
+            let input_ids = Tensor::from_slice(flat.as_slice(), (bsz, chunk_len), &self.device)?;
+            let chunked_hidden = self.model.forward(&input_ids)?;
+            let pooled = (chunked_hidden.sum(1)? / chunk_len as f64)?;
+            let norm_l2 = pooled.broadcast_div(&pooled.sqr()?.sum_keepdim(1)?.sqrt()?)?;
+            embeddings = norm_l2.to_vec2::<f32>()?;
+        }
+        if let Some(end_chunk) = end_chunk {
+            let tokens = Tensor::new(end_chunk, &self.device)?.unsqueeze(0)?;
 
-        let embeddings = self.model.forward(&tokens)?;
+            let hidden = self.model.forward(&tokens)?;
+            let (_n_sentence, n_tokens, _hidden_size) = hidden.dims3()?;
+            let pool = (hidden.sum(1)? / (n_tokens as f64))?;
+            let norm_l2 = pool.broadcast_div(&pool.sqr()?.sum_keepdim(1)?.sqrt()?)?;
+            embeddings.push(norm_l2.squeeze(0)?.to_vec1()?);
+        }
 
-        let (_n_sentence, n_tokens, _hidden_size) = embeddings.dims3()?;
-        let embeddings = (embeddings.sum(1)? / (n_tokens as f64))?;
-        let norm_l2 = embeddings.broadcast_div(&embeddings.sqr()?.sum_keepdim(1)?.sqrt()?)?;
-
-        Ok(norm_l2)
+        Ok(embeddings)
     }
 
-    pub fn embed(&mut self, val: &str) -> Result<Tensor> {
+    pub fn naive_embed(&mut self, val: &str) -> Result<Tensor> {
         let tokens = self.tokenizer.encode(val, true).map_err(Error::msg)?;
 
         let tokens = Tensor::new(tokens.get_ids(), &self.device)?.unsqueeze(0)?;

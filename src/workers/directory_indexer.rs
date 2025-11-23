@@ -1,4 +1,4 @@
-use file_indexer::{FileIndexer, FileMeta, IndexEvent, IndexRequest};
+use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -66,8 +66,6 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
         tokio::task::spawn(FileIndexer::new(task.path, rx_req).run(tx_event));
 
-        //self.ctx.
-
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
             let new_registration = match rx {
@@ -85,21 +83,38 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 IndexEvent::Register(file) => file,
             };
 
-            let model = files::ActiveModel {
-                ..Default::default()
-            };
-            match new_registration.file_type {
-                FileMeta::Text => {
+            //yes, bad. I know. Hope you don't run this on windows
+            let path = new_registration.path.to_string_lossy().into_owned();
+            let title = new_registration
+                .path
+                .file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or(path.clone());
 
-                    //todo
-                }
-                FileMeta::Jpeg => {
-                    todo!()
-                }
-                FileMeta::Unknown => {
-                    todo!()
-                }
+            let Ok(model) = files::ActiveModel {
+                title: Set(title),
+                path: Set(path),
+                ..Default::default()
             }
+            .insert(&self.ctx.db)
+            .await
+            else {
+                continue;
+            };
+            //read it
+
+            // match new_registration.file_type {
+            //     FileMeta::Text => {
+
+            //         //todo
+            //     }
+            //     FileMeta::Jpeg => {
+            //         todo!()
+            //     }
+            //     FileMeta::Unknown => {
+            //         todo!()
+            //     }
+            // }
         }
 
         // TODO: Some actual work goes here...

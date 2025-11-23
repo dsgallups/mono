@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.17"
+embed_db.workspace = true
 tokio.workspace = true
 unicode-normalization = "0.1.25"
 unicode-segmentation = "1.12.0"

@@ -1,8 +1,10 @@
 use embed_db::{NewEmbed, EMBED_DB};
-use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
+
+mod processor;
+use processor::*;
 
 use crate::models::{file_chunks, files, index_tasks};
 

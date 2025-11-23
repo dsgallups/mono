@@ -1,5 +1,5 @@
 [workspace]
-members = ["embed_db","file_indexer"]
+members = ["embed_db"]
 
 [package]
 name = "mono"
@@ -21,7 +21,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 
 [dependencies]
-file_indexer = {path = "file_indexer"}
 loco-rs = { workspace = true  }
 serde.workspace = true
 serde_json.workspace = true
@@ -44,6 +43,10 @@ uuid = { version = "1.6", features = ["v4"] }
 include_dir = { version = "0.7" }
 axum-extra = { version = "0.10", features = ["form"] }
 embed_db.workspace = true
+thiserror = "2.0.17"
+unicode-normalization = "0.1.25"
+unicode-segmentation = "1.12.0"
+walkdir = "2.5.0"
 
 [[bin]]
 name = "mono-cli"

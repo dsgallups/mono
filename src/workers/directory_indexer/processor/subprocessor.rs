@@ -1,9 +1,9 @@
 use tokio::sync::mpsc::UnboundedSender;
 use walkdir::DirEntry;
 
-use crate::{
+use crate::workers::directory_indexer::{
+    processor::{FileRegError, FileRegErrorType, FileRegistration},
     FileIndexError, IndexEvent,
-    registration::{FileRegError, FileRegErrorType, FileRegistration},
 };
 
 pub async fn process(

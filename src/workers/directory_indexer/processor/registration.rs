@@ -2,6 +2,7 @@ use std::{ffi::OsStr, io, path::PathBuf};
 
 use embed_db::{Chunk, EMBEDDER};
 use tokio::{fs, sync::Semaphore};
+use tracing::info;
 
 const GIGS_ALLOWED: u64 = 8;
 const BYTES_PER_PERMIT: u64 = 1 << 20;
@@ -9,13 +10,13 @@ const MAX_BYTES: u64 = GIGS_ALLOWED * (1 << 30);
 const MAX_PERMITS: usize = (MAX_BYTES / BYTES_PER_PERMIT) as usize;
 static OPEN_BYTES_SEM: Semaphore = Semaphore::const_new(MAX_PERMITS);
 
-#[derive(Debug)]
-pub struct FileRegistration {
+#[derive(Debug, Clone)]
+pub struct NewFileRegistration {
     pub path: PathBuf,
-    pub contents: FileEmbeddings,
+    pub file_type: Option<(FileType, u64)>,
 }
 
-impl FileRegistration {
+impl NewFileRegistration {
     pub async fn new(path: PathBuf) -> Result<Self, FileRegError> {
         if !path.is_file() {
             return Err(FileRegError::dir(path));
@@ -33,29 +34,46 @@ impl FileRegistration {
         let Some(file_type) = file_type else {
             return Ok(Self {
                 path,
-                contents: FileEmbeddings::Unknown,
+                file_type: None,
             });
         };
 
-        let mut _permit = None;
-
-        match fs::metadata(&path).await {
+        let required_permits = match fs::metadata(&path).await {
             Ok(metadata) => {
                 let length = metadata.len();
-                let needed = length.div_ceil(BYTES_PER_PERMIT);
-                _permit = Some(OPEN_BYTES_SEM.acquire_many(needed as u32).await.unwrap());
+                length.div_ceil(BYTES_PER_PERMIT)
             }
             Err(e) => {
                 return Err(FileRegError::io(path, e));
             }
-        }
+        };
+
+        Ok(Self {
+            path,
+            file_type: Some((file_type, required_permits)),
+        })
+    }
+
+    pub async fn into_file_registration(self) -> Result<FileRegistration, FileRegError> {
+        let Some((file_type, required_permits)) = self.file_type else {
+            return Ok(FileRegistration {
+                path: self.path,
+                contents: FileEmbeddings::Unknown,
+            });
+        };
+
+        let _permit = OPEN_BYTES_SEM
+            .acquire_many(required_permits as u32)
+            .await
+            .unwrap();
+
         // We will process entire files altogether. There is probably
         // a better implementation with buffering, but I assumed in my
         // embedder that all file chunks are available instantly.
         let prompt = match file_type {
-            FileType::Text => fs::read_to_string(&path)
+            FileType::Text => fs::read_to_string(&self.path)
                 .await
-                .map_err(|e| FileRegError::io(path.clone(), e))?,
+                .map_err(|e| FileRegError::io(self.path.clone(), e))?,
             FileType::Jpeg => {
                 todo!("Will use CLIP on JPEGs")
             }
@@ -63,21 +81,30 @@ impl FileRegistration {
 
         let embeddings = {
             let mut embedder = EMBEDDER.lock().unwrap();
-            embedder
+            info!("({:?}): Processing embeddings", self.path);
+            let res = embedder
                 .chunk_embed(&prompt)
-                .map_err(|_e| FileRegError::embedding(path.clone()))?
+                .map_err(|_e| FileRegError::embedding(self.path.clone()))?;
+            info!("({:?}): Processed!", self.path);
+            res
         };
 
         let file_embeddings = file_type.into_file_bytes(embeddings);
 
-        Ok(Self {
-            path,
+        Ok(FileRegistration {
+            path: self.path,
             contents: file_embeddings,
         })
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug)]
+pub struct FileRegistration {
+    pub path: PathBuf,
+    pub contents: FileEmbeddings,
+}
+
+#[derive(Clone, Copy, Debug)]
 enum FileType {
     Text,
     Jpeg,

@@ -20,7 +20,7 @@ static OPEN_BYTES_SEM: Semaphore = Semaphore::const_new(MAX_PERMITS);
 #[derive(Debug)]
 pub struct FileRegistration {
     pub path: PathBuf,
-    pub file_bytes: FileEmbeddings,
+    pub contents: FileEmbeddings,
 }
 
 impl FileRegistration {
@@ -41,7 +41,7 @@ impl FileRegistration {
         let Some(file_type) = file_type else {
             return Ok(Self {
                 path,
-                file_bytes: FileEmbeddings::Unknown,
+                contents: FileEmbeddings::Unknown,
             });
         };
 
@@ -80,7 +80,7 @@ impl FileRegistration {
 
         Ok(Self {
             path,
-            file_bytes: file_embeddings,
+            contents: file_embeddings,
         })
     }
 }
@@ -105,6 +105,15 @@ pub enum FileEmbeddings {
     Jpeg(Vec<Vec<f32>>),
     Unknown,
 }
+impl FileEmbeddings {
+    pub fn embeddings(&self) -> Option<&[Vec<f32>]> {
+        match self {
+            FileEmbeddings::Jpeg(v) | FileEmbeddings::Text(v) => Some(v.as_slice()),
+            FileEmbeddings::Unknown => None,
+        }
+    }
+}
+
 impl FileEmbeddings {}
 
 pub struct FileRegError {

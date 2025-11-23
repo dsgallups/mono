@@ -3235,6 +3235,7 @@ dependencies = [
  "axum-extra",
  "chrono",
  "file_indexer",
+ "hnsw_rs",
  "include_dir",
  "insta",
  "loco-rs",

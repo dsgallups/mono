@@ -4,7 +4,7 @@ use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use crate::models::{files, index_tasks};
+use crate::models::{file_chunks, files, index_tasks};
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -105,6 +105,21 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             else {
                 continue;
             };
+            let Some(embeddings) = new_registration.contents.embeddings() else {
+                continue;
+            };
+
+            for embed in embeddings {
+                let file_chunk = file_chunks::ActiveModel {
+                    content: Set("".to_string()),
+                    file_id: Set(model.id),
+                    ..Default::default()
+                }
+                .insert(&self.ctx.db)
+                .await
+                .unwrap();
+            }
+
             //read it
 
             // match new_registration.file_type {

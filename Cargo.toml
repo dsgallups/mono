@@ -12,6 +12,7 @@ default-run = "mono-cli"
 
 [workspace.dependencies]
 embed_db = {path = "embed_db"}
+hnsw_rs = "0.3.3"
 loco-rs = { version = "0.16" }
 tokio = { version = "1.45", default-features = false, features = [
   "rt-multi-thread",
@@ -42,6 +43,7 @@ validator = { version = "0.20" }
 uuid = { version = "1.6", features = ["v4"] }
 include_dir = { version = "0.7" }
 axum-extra = { version = "0.10", features = ["form"] }
+hnsw_rs.workspace = true
 
 [[bin]]
 name = "mono-cli"

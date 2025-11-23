@@ -1,9 +1,9 @@
 use anyhow::{Error, Result};
-use candle_core::{DType, Device};
+use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
 use candle_transformers::models::t5::{Config, T5EncoderModel};
 use hf_hub::{Repo, RepoType, api::sync::Api};
-use tokenizers::Tokenizer;
+use tokenizers::{EncodeInput, Tokenizer};
 
 pub struct T5Embedder {
     tokenizer: Tokenizer,
@@ -31,7 +31,12 @@ impl T5Embedder {
 
         let weights = repo.get("model.safetensors")?;
 
-        let tokenizer = Tokenizer::from_file(tokenizer).map_err(Error::msg)?;
+        let mut tokenizer = Tokenizer::from_file(tokenizer).map_err(Error::msg)?;
+
+        tokenizer
+            .with_padding(None)
+            .with_truncation(None)
+            .map_err(Error::msg)?;
 
         let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[weights], DType::F32, &device)? };
 
@@ -44,5 +49,26 @@ impl T5Embedder {
             device,
         };
         Ok(this)
+    }
+
+    pub fn embed<'s, E>(&mut self, val: E) -> Result<Tensor>
+    where
+        E: Into<EncodeInput<'s>>,
+    {
+        println!("Here, tokenizing");
+        let tokens = self.tokenizer.encode(val, true).map_err(Error::msg)?;
+
+        let tokens = Tensor::new(tokens.get_ids(), &self.device)?.unsqueeze(0)?;
+
+        let embeddings = self.model.forward(&tokens)?;
+        println!("Embeddings: {:?}", embeddings.shape());
+
+        let (_n_sentence, n_tokens, _hidden_size) = embeddings.dims3()?;
+        let embeddings = (embeddings.sum(1)? / (n_tokens as f64))?;
+        let norm_l2 = embeddings.broadcast_div(&embeddings.sqr()?.sum_keepdim(1)?.sqrt()?)?;
+
+        println!("pooled embeddings {:?}", embeddings.shape());
+
+        Ok(norm_l2)
     }
 }

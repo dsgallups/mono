@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     models::_entities::index_tasks::{ActiveModel, Entity, Model},
+    views::IndexResponse,
     workers::directory_indexer,
 };
 
@@ -20,8 +21,10 @@ async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
 }
 
 #[debug_handler]
-pub async fn list(State(ctx): State<AppContext>) -> Result<Response> {
-    format::json(Entity::find().all(&ctx.db).await?)
+pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<IndexResponse>>> {
+    let index_tasks = Entity::find().all(&ctx.db).await?;
+
+    Ok(Json(index_tasks.into_iter().map(Into::into).collect()))
 }
 
 #[debug_handler]

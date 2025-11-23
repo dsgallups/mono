@@ -4,7 +4,7 @@
 	import { SvelteURL } from 'svelte/reactivity';
 	import DirSearch from './DirSearch.svelte';
 	import MainSearch from './MainSearch.svelte';
-	import type { FileResponse } from '$lib/types';
+	import type { FileResponse, IndexResponse } from '$lib/types';
 
 	let initialSearch = $state(true);
 
@@ -21,6 +21,13 @@
 		return {
 			files
 		};
+	});
+
+	let indexExists = $derived.by(async () => {
+		const url = new URL('/api/index_tasks', page.url);
+		const result = await fetch(url);
+		const taskList: IndexResponse[] = await result.json();
+		return taskList;
 	});
 
 	let searchVal = $state('');
@@ -54,6 +61,11 @@
 </script>
 
 <div class="flex">
+	{#await indexExists}
+		<p>Loading State</p>
+	{:then indexExists}
+		<p>stuff</p>
+	{/await}
 	{#if initialSearch}
 		<div class="flex justify-center p-5">
 			<div class="flex flex-col gap-2">

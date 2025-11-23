@@ -8,13 +8,13 @@ use candle_transformers::models::{
 use hf_hub::{Repo, RepoType, api::sync::Api};
 use tokenizers::Tokenizer;
 
-pub struct MiniLMEmbedder {
+pub struct T5Embedder {
     tokenizer: Tokenizer,
     model: BertModel,
     device: Device,
 }
 
-impl MiniLMEmbedder {
+impl T5Embedder {
     pub fn new() -> Result<Self> {
         let device = Device::new_cuda(0)?;
 

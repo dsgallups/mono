@@ -10,6 +10,6 @@ use anyhow::Result;
 //se burn::prelude::Backend;
 
 fn main() -> Result<()> {
-    let embedder = MiniLMEmbedder::new()?;
+    let embedder = T5Embedder::new()?;
     Ok(())
 }

@@ -1,17 +1,7 @@
-mod embedder;
-use candle_core::Tensor;
-pub use embedder::*;
+use embed_db::{TextEmbedder, similarity};
 
-use anyhow::Result;
-
-//mod sentence_transformer;
-
-// using sentence-transformers/gtr-t5-base
-
-//se burn::prelude::Backend;
-
-fn main() -> Result<()> {
-    let mut embedder = T5Embedder::new()?;
+fn main() -> anyhow::Result<()> {
+    let mut embedder = TextEmbedder::new()?;
     println!("embedder loaded");
 
     let prompts = [
@@ -29,7 +19,7 @@ fn main() -> Result<()> {
 
     let mut tensor_results = Vec::with_capacity(prompts.len());
     for prompt in prompts {
-        let res = embedder.embed(prompt)?;
+        let res = embedder.naive_embed(prompt)?;
         tensor_results.push((prompt, res));
     }
 
@@ -43,21 +33,12 @@ fn main() -> Result<()> {
         }
     }
 
-    similarities.sort_by(|a, b| (b.0.total_cmp(&a.0)));
+    similarities.sort_by(|a, b| b.0.total_cmp(&a.0));
 
-    println!("Similarity scores:\n{similarities:#?}");
+    println!("Similarity scores:");
+    for (score, p1, p2) in similarities.into_iter().take(10) {
+        println!(r#"({score}): "{p1}" vs. "{p2}""#);
+    }
 
-    // let similarity = similarity(&t1, &t2)?;
-    // println!(r#"({similarity}): "{test_prompt}" vs "{test_prompt2}""#);
     Ok(())
-}
-
-fn similarity(t1: &Tensor, t2: &Tensor) -> Result<f32> {
-    let sum_comp = (t1 * t2)?.sum_all()?.to_scalar::<f32>()?;
-    let sum_t1 = (t1 * t1)?.sum_all()?.to_scalar::<f32>()?;
-    let sum_t2 = (t2 * t2)?.sum_all()?.to_scalar::<f32>()?;
-
-    let cosine_sim = sum_comp / (sum_t1 * sum_t2).sqrt();
-
-    Ok(cosine_sim)
 }

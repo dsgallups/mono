@@ -12,7 +12,7 @@ pub struct Model {
     pub id: i32,
     pub path: String,
     pub progress: i32,
-    pub queue: Json,
+    pub queue: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

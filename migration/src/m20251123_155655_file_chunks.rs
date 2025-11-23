@@ -9,19 +9,14 @@ impl MigrationTrait for Migration {
     async fn up(&self, m: &SchemaManager) -> Result<(), DbErr> {
         create_table(
             m,
-            "files",
-            &[
-                ("id", ColType::PkAuto),
-                ("title", ColType::String),
-                //This is obviously bad, should be raw bytes, but yknow. time.
-                ("path", ColType::String),
-            ],
-            &[],
+            "file_chunks",
+            &[("id", ColType::PkAuto), ("content", ColType::String)],
+            &[("file", "")],
         )
         .await
     }
 
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
-        drop_table(m, "files").await
+        drop_table(m, "file_chunks").await
     }
 }

@@ -1,5 +1,5 @@
 [workspace]
-members = ["embed_db","file_indexer"]
+members = ["embed_db"]
 
 [package]
 name = "mono"
@@ -11,6 +11,8 @@ default-run = "mono-cli"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
+embed_db = {path = "embed_db"}
+hnsw_rs = "0.3.3"
 loco-rs = { version = "0.16" }
 tokio = { version = "1.45", default-features = false, features = [
   "rt-multi-thread",
@@ -19,7 +21,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 
 [dependencies]
-file_indexer = {path = "file_indexer"}
 loco-rs = { workspace = true  }
 serde.workspace = true
 serde_json.workspace = true
@@ -41,6 +42,11 @@ validator = { version = "0.20" }
 uuid = { version = "1.6", features = ["v4"] }
 include_dir = { version = "0.7" }
 axum-extra = { version = "0.10", features = ["form"] }
+embed_db.workspace = true
+thiserror = "2.0.17"
+unicode-normalization = "0.1.25"
+unicode-segmentation = "1.12.0"
+walkdir = "2.5.0"
 
 [[bin]]
 name = "mono-cli"

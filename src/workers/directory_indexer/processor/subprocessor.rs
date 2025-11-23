@@ -1,11 +1,9 @@
-use std::error::Error;
-
 use tokio::sync::mpsc::UnboundedSender;
 use walkdir::DirEntry;
 
-use crate::{
+use crate::workers::directory_indexer::{
+    processor::{FileRegError, FileRegErrorType, FileRegistration},
     FileIndexError, IndexEvent,
-    registration::{FileRegError, FileRegErrorType, FileRegistration},
 };
 
 pub async fn process(
@@ -15,14 +13,19 @@ pub async fn process(
     match FileRegistration::new(entry.into_path()).await {
         Ok(registration) => {
             channel.send(IndexEvent::Register(registration))?;
-            Ok(())
         }
         Err(FileRegError { path, err_type }) => match err_type {
-            FileRegErrorType::Directory => Ok(()),
+            FileRegErrorType::Directory => {
+                channel.send(IndexEvent::FinishedWithNoop)?;
+            }
+            FileRegErrorType::Embedding => {
+                channel.send(IndexEvent::EmbeddingFailure(path))?;
+            }
             FileRegErrorType::Io(err) => {
                 channel.send(IndexEvent::Read { path, err })?;
-                Ok(())
             }
         },
     }
+
+    Ok(())
 }

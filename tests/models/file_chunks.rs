@@ -1,5 +1,5 @@
-use mono::app::App;
 use loco_rs::testing::prelude::*;
+use mono::app::App;
 use serial_test::serial;
 
 macro_rules! configure_insta {

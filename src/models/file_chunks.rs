@@ -1,5 +1,5 @@
+pub use super::_entities::file_chunks::{ActiveModel, Entity, Model};
 use sea_orm::entity::prelude::*;
-pub use super::_entities::file_chunks::{ActiveModel, Model, Entity};
 pub type FileChunks = Entity;
 
 #[async_trait::async_trait]

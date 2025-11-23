@@ -51,23 +51,53 @@ impl TextEmbedder {
         Ok(this)
     }
 
-    pub fn embed<'s, E>(&mut self, val: E) -> Result<Tensor>
-    where
-        E: Into<EncodeInput<'s>>,
-    {
-        println!("Here, tokenizing");
+    pub fn better_embed(&mut self, val: &str) -> Result<Tensor> {
         let tokens = self.tokenizer.encode(val, true).map_err(Error::msg)?;
 
-        let tokens = Tensor::new(tokens.get_ids(), &self.device)?.unsqueeze(0)?;
+        // Here, we're going to basically have a chunking length of 300 tokens.
+        // We'll have an overlap of around 50 tokens ~16%.
+        // the stride here being 250 (chunk_len - overlap).
+        // I think these params are reasonable for demo purposes.
+        //
+        // Ideally you'd like to chunk paragraphs and other identifiers of non-continuous thought for a
+        // more reasonable strategy.
+        let ids = tokens.get_ids();
+        let chunk_len = 300;
+        let overlap = 50;
+        let stride = chunk_len - overlap;
+
+        let mut chunked_len = Vec::with_capacity(ids.len().div_ceil(chunk_len));
+        let mut start = 0usize;
+        while start < ids.len() {
+            let end = (start + chunk_len).min(ids.len());
+            chunked_len.push(ids[start..end].to_vec());
+            if end == ids.len() {
+                break;
+            }
+            start += stride;
+        }
+
+        let tokens = Tensor::new(ids, &self.device)?.unsqueeze(0)?;
 
         let embeddings = self.model.forward(&tokens)?;
-        println!("Embeddings: {:?}", embeddings.shape());
 
         let (_n_sentence, n_tokens, _hidden_size) = embeddings.dims3()?;
         let embeddings = (embeddings.sum(1)? / (n_tokens as f64))?;
         let norm_l2 = embeddings.broadcast_div(&embeddings.sqr()?.sum_keepdim(1)?.sqrt()?)?;
 
-        println!("pooled embeddings {:?}", embeddings.shape());
+        Ok(norm_l2)
+    }
+
+    pub fn embed(&mut self, val: &str) -> Result<Tensor> {
+        let tokens = self.tokenizer.encode(val, true).map_err(Error::msg)?;
+
+        let tokens = Tensor::new(tokens.get_ids(), &self.device)?.unsqueeze(0)?;
+
+        let embeddings = self.model.forward(&tokens)?;
+
+        let (_n_sentence, n_tokens, _hidden_size) = embeddings.dims3()?;
+        let embeddings = (embeddings.sum(1)? / (n_tokens as f64))?;
+        let norm_l2 = embeddings.broadcast_div(&embeddings.sqr()?.sum_keepdim(1)?.sqrt()?)?;
 
         Ok(norm_l2)
     }

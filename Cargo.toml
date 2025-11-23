@@ -1,5 +1,5 @@
 [workspace]
-members = ["embedder","file_indexer"]
+members = ["embed_db","file_indexer"]
 
 [package]
 name = "mono"

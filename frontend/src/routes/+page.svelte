@@ -1,50 +1,21 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { SvelteURL } from 'svelte/reactivity';
 	import DirSearch from './DirSearch.svelte';
-	import MainSearch from './MainSearch.svelte';
-	import type { FileResponse, IndexResponse } from '$lib/types';
+	import type { IndexResponse } from '$lib/types';
+	import MainView from './MainView.svelte';
+	import { onMount } from 'svelte';
 
-	let initialSearch = $state(true);
-
-	let apiUrl = new SvelteURL('/api/files', page.url);
-	let data = $derived.by(async () => {
-		let qParams = apiUrl.searchParams.get('q');
-		if (!qParams) {
-			return {
-				files: []
-			};
-		}
-		const result = await fetch(apiUrl);
-		const files: FileResponse[] = await result.json();
-		return {
-			files
-		};
-	});
-
-	let indexExists = $derived.by(async () => {
+	let loading = $state(true);
+	let indexResponse: IndexResponse[] = $state([]);
+	onMount(async () => {
 		const url = new URL('/api/index_tasks', page.url);
 		const result = await fetch(url);
-		const taskList: IndexResponse[] = await result.json();
-		return taskList;
+		indexResponse = await result.json();
+		//yo
+		loading = false;
 	});
 
-	let searchVal = $state('');
-
-	let dirSearchFocused = $state(false);
-
-	function onSubmitSearch() {
-		initialSearch = false;
-
-		const url = new URL(page.url);
-		url.searchParams.set('q', searchVal);
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(url, { replaceState: true, noScroll: true });
-	}
-
 	async function onSubmitDirSearch(value: string) {
-		initialSearch = false;
 		console.log('submitting value ', value);
 		const url = new URL('/api/index_tasks', page.url);
 
@@ -61,38 +32,16 @@
 </script>
 
 <div class="flex">
-	{#await indexExists}
+	{#if loading}
 		<p>Loading State</p>
-	{:then indexExists}
-		<p>stuff</p>
-	{/await}
-	{#if initialSearch}
+	{:else if indexResponse.length === 0}
 		<div class="flex justify-center p-5">
 			<div class="flex flex-col gap-2">
-				<DirSearch
-					onfocus={() => {
-						console.log('focusin');
-						dirSearchFocused = true;
-					}}
-					onblur={() => {
-						console.log('blurin');
-						dirSearchFocused = false;
-					}}
-					onsubmit={onSubmitDirSearch}
-				/>
-				{#if !dirSearchFocused}
-					<div>
-						<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
-					</div>
-				{/if}
+				<p class="text-lg">Let's get to indexing!</p>
+				<DirSearch onsubmit={onSubmitDirSearch} />
 			</div>
 		</div>
 	{:else}
-		<div class="flex p-5">
-			<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
-		</div>
-		{#await data then data}
-			<div>{data.files.length}</div>
-		{/await}
+		<MainView />
 	{/if}
 </div>

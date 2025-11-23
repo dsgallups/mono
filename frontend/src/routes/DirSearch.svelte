@@ -2,8 +2,8 @@
 	import { page } from '$app/state';
 
 	interface Props {
-		onfocus: () => void;
-		onblur: () => void;
+		onfocus?: () => void;
+		onblur?: () => void;
 		onsubmit: (arg0: string) => void;
 	}
 
@@ -32,9 +32,9 @@
 					onsubmit(value);
 				} else {
 					if (value === '') {
-						onblur();
+						onblur?.();
 					} else {
-						onfocus();
+						onfocus?.();
 					}
 				}
 			}}

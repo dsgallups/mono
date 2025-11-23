@@ -31,6 +31,7 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Json<Vec<IndexRespons
 pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> Result<Response> {
     let item = ActiveModel {
         path: Set(params.path),
+        queue: Set("Starting Task".to_string()),
         ..Default::default()
     };
     let item = item.insert(&ctx.db).await?;

@@ -25,3 +25,5 @@ vector_db
 # Big files
 *.safetensors
 *.model
+
+20news_txt

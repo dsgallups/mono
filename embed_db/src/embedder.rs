@@ -70,11 +70,9 @@ impl TextEmbedder {
         let mut end_chunk = None;
         let mut start = 0;
         while start < ids.len() {
-            println!("here, start: {start}");
             let end = start + chunk_len;
             if end > ids.len() {
                 end_chunk = Some(ids[start..ids.len()].to_vec());
-                println!("yo");
                 break;
             } else {
                 full_chunks.push(ids[start..end].to_vec());

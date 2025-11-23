@@ -1,7 +1,7 @@
-use embed_db::{T5Embedder, similarity};
+use embed_db::{TextEmbedder, similarity};
 
 fn main() -> anyhow::Result<()> {
-    let mut embedder = T5Embedder::new()?;
+    let mut embedder = TextEmbedder::new()?;
     println!("embedder loaded");
 
     let prompts = [

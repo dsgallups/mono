@@ -5,13 +5,13 @@ use candle_transformers::models::t5::{Config, T5EncoderModel};
 use hf_hub::{Repo, RepoType, api::sync::Api};
 use tokenizers::{EncodeInput, Tokenizer};
 
-pub struct T5Embedder {
+pub struct TextEmbedder {
     tokenizer: Tokenizer,
     model: T5EncoderModel,
     device: Device,
 }
 
-impl T5Embedder {
+impl TextEmbedder {
     pub fn new() -> Result<Self> {
         let device = Device::new_cuda(0)?;
 
@@ -43,7 +43,7 @@ impl T5Embedder {
         let config = std::fs::read_to_string(config)?;
         let config: Config = serde_json::from_str(&config)?;
         let encoder_model = T5EncoderModel::load(vb, &config)?;
-        let this = T5Embedder {
+        let this = TextEmbedder {
             tokenizer,
             model: encoder_model,
             device,

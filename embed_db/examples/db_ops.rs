@@ -18,7 +18,7 @@ fn main() -> Result<()> {
 
     // iirc max elements is a size hint.
     let hnsw: Hnsw<f32, DistCosine> = Hnsw::new(32, 100000, 16, 200, DistCosine);
-    let mut embedded = T5Embedder::new()?;
+    let mut embedded = TextEmbedder::new()?;
     for (id, prompt) in prompts.iter().enumerate() {
         let embed = embedded.embed(*prompt)?.squeeze(0)?;
         let floats: Vec<f32> = embed.to_vec1()?;
@@ -27,7 +27,7 @@ fn main() -> Result<()> {
 
     let prompt_embed = embedded.embed("Social Media")?.squeeze(0)?;
     let floats: Vec<f32> = prompt_embed.to_vec1()?;
-    let neighbors = hnsw.search(&floats, 100, 50);
+    let neighbors = hnsw.search(&floats, 20, 50);
 
     for neighbor in neighbors {
         let id = neighbor.d_id;

@@ -64,7 +64,12 @@
 							<button
 								class="bg-blue-900 p-1 text-left hover:bg-blue-800"
 								onclick={() => {
-									value += `/${result}`;
+									let c = value.charAt(value.length - 1);
+									if (c === '/') {
+										value += result;
+									} else {
+										value += `/${result}`;
+									}
 								}}>{result}</button
 							>
 						{/each}

@@ -5,6 +5,7 @@ use tokio::sync::mpsc;
 
 mod processor;
 use processor::*;
+use tracing::info;
 
 use crate::models::{file_chunks, files, index_tasks};
 
@@ -53,7 +54,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
     /// # Returns
     /// * `Result<()>` - Ok if the job completed successfully, Err otherwise
     async fn perform(&self, args: WorkerArgs) -> Result<()> {
-        println!("=================DirectoryIndexer=======================");
+        info!("=================DirectoryIndexer=======================");
 
         let task = index_tasks::Entity::find_by_id(args.task_id)
             .one(&self.ctx.db)
@@ -72,6 +73,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
+            info!("ev {rx:?}");
             let new_registration = match rx {
                 IndexEvent::AccessError(_io) => {
                     entries_processed += 1;

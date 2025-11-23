@@ -1,4 +1,7 @@
-use std::sync::{Arc, LazyLock, Mutex};
+use std::{
+    fmt,
+    sync::{Arc, LazyLock, Mutex},
+};
 
 use anyhow::{Error, Result};
 use candle_core::{DType, Device, Tensor};
@@ -147,11 +150,19 @@ impl TextEmbedder {
     }
 }
 
-#[derive(Debug)]
 pub struct Chunk {
     pub text: String,
     pub embeddings: Vec<f32>,
 }
+impl fmt::Debug for Chunk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Chunk")
+            .field("text", &self.text)
+            .field("embeddings", &self.embeddings.len())
+            .finish()
+    }
+}
+
 impl Chunk {
     pub fn text(&self) -> &str {
         &self.text

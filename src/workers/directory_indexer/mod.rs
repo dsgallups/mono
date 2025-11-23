@@ -64,19 +64,15 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
         let (tx_event, mut rx_event) = mpsc::unbounded_channel::<IndexEvent>();
 
-        //todo: this channel will cleanup if a graceful shutdown is possible.
-        let (_tx_req, rx_req) = mpsc::unbounded_channel::<IndexRequest>();
+        //todo: FileIndexer could be shutdown gracefully.
 
-        tokio::task::spawn(FileIndexer::new(task.path, rx_req).run(tx_event));
+        tokio::task::spawn(FileIndexer::new(task.path).run(tx_event));
 
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
             let new_registration = match rx {
                 IndexEvent::AccessError(_io) => {
                     //you would do something like save this error, etc.
-                    continue;
-                }
-                IndexEvent::DirectoryWalked => {
                     continue;
                 }
                 IndexEvent::Read { path: _, err: _ } => {

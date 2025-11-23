@@ -1,20 +1,12 @@
 mod registration;
 pub use registration::*;
 mod subprocessor;
-mod tokenize;
 
 use std::{io, path::PathBuf};
 
 use thiserror::Error;
-use tokio::sync::{
-    mpsc::{UnboundedReceiver, UnboundedSender, error::SendError},
-    oneshot,
-};
+use tokio::sync::mpsc::{error::SendError, UnboundedSender};
 use walkdir::WalkDir;
-
-pub enum IndexRequest {
-    Close(oneshot::Sender<Vec<IndexEvent>>),
-}
 
 #[derive(Error, Debug)]
 pub enum FileIndexError {
@@ -27,31 +19,22 @@ impl From<SendError<IndexEvent>> for FileIndexError {
     }
 }
 #[derive(Debug)]
+#[expect(dead_code)]
 pub enum IndexEvent {
     AccessError(walkdir::Error),
-    Read {
-        path: PathBuf,
-        err: io::Error,
-    },
+    Read { path: PathBuf, err: io::Error },
     EmbeddingFailure(PathBuf),
     Register(FileRegistration),
-    /// The contents of the directory have been identified and split into
-    /// new async threads
-    DirectoryWalked,
 }
 
 /// TODO: keep a cache of already indexed files for the subprocessor to avoid
 pub struct FileIndexer {
-    request_chan: UnboundedReceiver<IndexRequest>,
     path: PathBuf,
 }
 
 impl FileIndexer {
-    pub fn new(path: impl Into<PathBuf>, request: UnboundedReceiver<IndexRequest>) -> Self {
-        Self {
-            path: path.into(),
-            request_chan: request,
-        }
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self { path: path.into() }
     }
     /// MUST be called in a tokio runtime :)
     pub async fn run(self, channel: UnboundedSender<IndexEvent>) -> Result<(), FileIndexError> {
@@ -67,7 +50,6 @@ impl FileIndexer {
             };
             tokio::task::spawn(subprocessor::process(entry, channel.clone()));
         }
-        channel.send(IndexEvent::DirectoryWalked)?;
         Ok(())
     }
 }

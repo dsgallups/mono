@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.100"
+# burn = "0.19.1"
+candle-core = {version = "0.9.1", features = ["cuda"] }
+candle-nn = {version = "0.9.1", features = ["cuda"] }
+candle-transformers = {version = "0.9.1", features = ["cuda"] }
+tokenizers = "0.22.1"

@@ -1,8 +1,10 @@
 mod embedder;
+pub use embedder::*;
+
 mod vector_db;
+pub use vector_db::*;
 
 use candle_core::Tensor;
-pub use embedder::*;
 
 use anyhow::Result;
 

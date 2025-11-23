@@ -1,12 +1,10 @@
+use embed_db::{NewEmbed, EMBED_DB};
 use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
-use crate::{
-    hnsw::{NewEmbed, EMBED_DB},
-    models::{file_chunks, files, index_tasks},
-};
+use crate::models::{file_chunks, files, index_tasks};
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -122,12 +120,12 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 .insert(&self.ctx.db)
                 .await
                 .unwrap();
+
                 new_embeds.push(NewEmbed {
                     id: file_chunk.id as usize,
                     embeds: embed,
                 });
             }
-
             EMBED_DB.insert(new_embeds);
         }
 

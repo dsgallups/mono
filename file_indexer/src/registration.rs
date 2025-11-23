@@ -1,15 +1,7 @@
-use std::{
-    ffi::OsStr,
-    io,
-    path::PathBuf,
-    sync::{Arc, LazyLock, Mutex},
-};
+use std::{ffi::OsStr, io, path::PathBuf};
 
-use embed_db::TextEmbedder;
+use embed_db::EMBEDDER;
 use tokio::{fs, sync::Semaphore};
-
-static EMBEDDER: LazyLock<Arc<Mutex<TextEmbedder>>> =
-    LazyLock::new(|| Arc::new(Mutex::new(TextEmbedder::new().unwrap())));
 
 const GIGS_ALLOWED: u64 = 8;
 const BYTES_PER_PERMIT: u64 = 1 << 20;

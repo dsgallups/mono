@@ -1,9 +1,14 @@
+use std::sync::{Arc, LazyLock, Mutex};
+
 use anyhow::{Error, Result};
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
 use candle_transformers::models::t5::{Config, T5EncoderModel};
 use hf_hub::{Repo, RepoType, api::sync::Api};
 use tokenizers::Tokenizer;
+
+pub static EMBEDDER: LazyLock<Arc<Mutex<TextEmbedder>>> =
+    LazyLock::new(|| Arc::new(Mutex::new(TextEmbedder::new().unwrap())));
 
 pub struct TextEmbedder {
     tokenizer: Tokenizer,

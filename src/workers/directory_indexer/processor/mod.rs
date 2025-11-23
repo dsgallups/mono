@@ -22,6 +22,7 @@ impl From<SendError<IndexEvent>> for FileIndexError {
 pub enum IndexEvent {
     AccessError(walkdir::Error),
     FinishedWithNoop,
+    #[expect(dead_code)]
     Read {
         path: PathBuf,
         err: io::Error,

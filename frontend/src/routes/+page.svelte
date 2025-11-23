@@ -22,8 +22,6 @@
 			files
 		};
 	});
-	// eslint-disable-next-line svelte/no-inspect
-	$inspect(data);
 
 	let searchVal = $state('');
 
@@ -41,7 +39,7 @@
 	async function onSubmitDirSearch(value: string) {
 		initialSearch = false;
 		console.log('submitting value ', value);
-		const url = new URL('/api/directories', page.url);
+		const url = new URL('/api/index_tasks', page.url);
 
 		await fetch(url, {
 			method: `POST`,
@@ -81,5 +79,8 @@
 		<div class="flex p-5">
 			<MainSearch bind:value={searchVal} onsubmit={onSubmitSearch} />
 		</div>
+		{#await data then data}
+			<div>{data.files.length}</div>
+		{/await}
 	{/if}
 </div>

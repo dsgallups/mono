@@ -13,11 +13,6 @@ pub struct Params {
 }
 
 #[debug_handler]
-pub async fn perform_indexing_task(State(_ctx): State<AppContext>, Json(params): Json<Params>) {
-    tracing::info!("index on params: {params:?}");
-}
-
-#[debug_handler]
 pub async fn list_directory_contents(Query(params): Query<Params>) -> Result<Json<Vec<String>>> {
     let path_buf = PathBuf::from(params.path);
 
@@ -36,8 +31,7 @@ pub async fn list_directory_contents(Query(params): Query<Params>) -> Result<Jso
 }
 
 pub fn routes() -> Routes {
-    Routes::new().prefix("api/directories/").add(
-        "/",
-        get(list_directory_contents).post(perform_indexing_task),
-    )
+    Routes::new()
+        .prefix("api/directories/")
+        .add("/", get(list_directory_contents))
 }

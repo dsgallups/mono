@@ -1,4 +1,5 @@
 [workspace]
+members = ["embed_db","file_indexer"]
 
 [package]
 name = "mono"
@@ -11,14 +12,18 @@ default-run = "mono-cli"
 
 [workspace.dependencies]
 loco-rs = { version = "0.16" }
-
-[dependencies]
-loco-rs = { workspace = true  }
-serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1" }
 tokio = { version = "1.45", default-features = false, features = [
   "rt-multi-thread",
 ] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+
+[dependencies]
+file_indexer = {path = "file_indexer"}
+loco-rs = { workspace = true  }
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
 async-trait = { version = "0.1" }
 axum = { version = "0.8" }
 tracing = { version = "0.1" }

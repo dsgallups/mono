@@ -1,7 +1,9 @@
-use std::path::PathBuf;
-
+use file_indexer::{FileIndexer, IndexEvent, IndexRequest};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
+
+use crate::models::index_tasks;
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -9,7 +11,7 @@ pub struct Worker {
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct WorkerArgs {
-    path: PathBuf,
+    pub task_id: i32,
 }
 
 #[async_trait]
@@ -47,8 +49,31 @@ impl BackgroundWorker<WorkerArgs> for Worker {
     ///
     /// # Returns
     /// * `Result<()>` - Ok if the job completed successfully, Err otherwise
-    async fn perform(&self, _args: WorkerArgs) -> Result<()> {
+    async fn perform(&self, args: WorkerArgs) -> Result<()> {
         println!("=================DirectoryIndexer=======================");
+
+        let task = index_tasks::Entity::find_by_id(args.task_id)
+            .one(&self.ctx.db)
+            .await?
+            .ok_or(Error::NotFound)?;
+
+        tracing::info!("Performing task {task:?}");
+
+        let (tx_event, mut rx_event) = mpsc::unbounded_channel::<IndexEvent>();
+
+        //todo: this channel will cleanup if a graceful shutdown is possible.
+        let (tx_req, rx_req) = mpsc::unbounded_channel::<IndexRequest>();
+
+        tokio::task::spawn(FileIndexer::new(task.path, rx_req).run(tx_event));
+
+        //self.ctx.
+
+        //todo: need to shut down gracefully
+        while let Some(rx) = rx_event.recv().await {
+
+            //todo
+        }
+
         // TODO: Some actual work goes here...
         Ok(())
     }

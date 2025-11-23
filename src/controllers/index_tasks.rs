@@ -2,23 +2,16 @@
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
 use loco_rs::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::models::_entities::index_tasks::{ActiveModel, Entity, Model};
+use crate::{
+    models::_entities::index_tasks::{ActiveModel, Entity, Model},
+    workers::directory_indexer,
+};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Params {
     pub path: String,
-    pub progress: i32,
-    pub queue: serde_json::Value,
-}
-
-impl Params {
-    fn update(&self, item: &mut ActiveModel) {
-        item.path = Set(self.path.clone());
-        item.progress = Set(self.progress);
-        item.queue = Set(self.queue.clone());
-    }
 }
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
@@ -33,24 +26,17 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Response> {
 
 #[debug_handler]
 pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> Result<Response> {
-    let mut item = ActiveModel {
+    let item = ActiveModel {
+        path: Set(params.path),
         ..Default::default()
     };
-    params.update(&mut item);
     let item = item.insert(&ctx.db).await?;
-    format::json(item)
-}
 
-#[debug_handler]
-pub async fn update(
-    Path(id): Path<i32>,
-    State(ctx): State<AppContext>,
-    Json(params): Json<Params>,
-) -> Result<Response> {
-    let item = load_item(&ctx, id).await?;
-    let mut item = item.into_active_model();
-    params.update(&mut item);
-    let item = item.update(&ctx.db).await?;
+    directory_indexer::Worker::perform_later(
+        &ctx,
+        directory_indexer::WorkerArgs { task_id: item.id },
+    )
+    .await?;
     format::json(item)
 }
 
@@ -72,6 +58,4 @@ pub fn routes() -> Routes {
         .add("/", post(add))
         .add("{id}", get(get_one))
         .add("{id}", delete(remove))
-        .add("{id}", put(update))
-        .add("{id}", patch(update))
 }

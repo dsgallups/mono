@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    sync::{Arc, LazyLock, Mutex},
+    sync::{Arc, LazyLock},
 };
 
 use anyhow::{Error, Result};
@@ -9,7 +9,12 @@ use candle_nn::VarBuilder;
 use candle_transformers::models::t5::{Config, T5EncoderModel};
 use hf_hub::{Repo, RepoType, api::sync::Api};
 use tokenizers::Tokenizer;
+use tokio::sync::Mutex;
 
+/// One of the very few times where a tokio mutex is necessary.
+///
+/// Because we have so many threads looking to acquire this lock, we must allow
+/// them to park, despite the performance hit.
 pub static EMBEDDER: LazyLock<Arc<Mutex<TextEmbedder>>> =
     LazyLock::new(|| Arc::new(Mutex::new(TextEmbedder::new().unwrap())));
 

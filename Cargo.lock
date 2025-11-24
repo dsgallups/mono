@@ -1464,6 +1464,7 @@ dependencies = [
  "hnsw_rs",
  "serde_json",
  "tokenizers",
+ "tokio",
 ]
 
 [[package]]

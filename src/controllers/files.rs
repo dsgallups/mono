@@ -38,7 +38,7 @@ pub async fn list(
     };
 
     let embedding: Vec<f32> = {
-        let mut lock = EMBEDDER.lock().unwrap();
+        let mut lock = EMBEDDER.lock().await;
         let result = lock.naive_embed(&prompt).unwrap().squeeze(0).unwrap();
         result.to_vec1().unwrap()
     };

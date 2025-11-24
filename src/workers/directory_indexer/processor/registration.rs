@@ -41,10 +41,10 @@ impl FileRegistration {
         let mut _permit = None;
 
         match fs::metadata(&path).await {
-            Ok(metadata) => {
+            Ok(_metadata) => {
                 let length = metadata.len();
                 let needed = length.div_ceil(BYTES_PER_PERMIT);
-                _permit = Some(OPEN_BYTES_SEM.acquire_many(needed as u32).await.unwrap());
+                _permit = Some(ALLOWED_THREADS.acquire().await.unwrap());
             }
             Err(e) => {
                 return Err(FileRegError::io(path, e));
@@ -63,7 +63,7 @@ impl FileRegistration {
         };
 
         let embeddings = {
-            let mut embedder = EMBEDDER.lock().unwrap();
+            let mut embedder = EMBEDDER.lock().await;
             let result = embedder
                 .chunk_embed(&prompt)
                 .map_err(|_e| FileRegError::embedding(path.clone()))?;

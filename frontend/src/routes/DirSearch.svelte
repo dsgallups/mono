@@ -22,10 +22,8 @@
 	});
 
 	let searchResults = $derived.by(async () => {
-		const someVal = queryValue;
-		console.log('performing search!', queryValue);
 		let url = new URL('/api/directories', page.url);
-		url.searchParams.set('path', someVal);
+		url.searchParams.set('path', queryValue);
 		let response = await fetch(url);
 		let responseData: string[] = await response.json();
 		return ['..', ...responseData];
@@ -38,6 +36,9 @@
 			placeholder="Index Directory"
 			class="box-border text-black sm:w-lg lg:w-4xl"
 			bind:value
+			onblur={() => {
+				focusSearch = false;
+			}}
 			onfocus={() => {
 				focusSearch = true;
 			}}

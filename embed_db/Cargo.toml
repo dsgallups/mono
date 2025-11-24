@@ -11,5 +11,6 @@ candle-nn = {version = "0.9.1", features = ["cuda"] }
 candle-transformers = {version = "0.9.1", features = ["cuda"] }
 tokenizers = "0.22.1"
 hf-hub = "0.4.3"
+tokio.workspace = true
 serde_json.workspace = true
 hnsw_rs.workspace = true

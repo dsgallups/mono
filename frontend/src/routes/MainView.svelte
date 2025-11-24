@@ -132,14 +132,14 @@
 	}
 </script>
 
-<div class="flex flex-col gap-6 p-6">
+<div class="flex min-h-screen flex-col gap-6 bg-gray-900 p-6">
 	<div class="flex flex-col items-center gap-4">
 		<div class="flex items-center gap-3">
 			<MainSearch bind:value={searchValue} onkeyup={queryFiles} />
 			<button
 				class="rounded-md border-2 px-4 py-2 font-medium transition-all duration-200 {showDirSearch
-					? 'border-amber-500 bg-amber-500 text-white'
-					: 'border-amber-500 text-amber-600 hover:bg-amber-50'}"
+					? 'border-amber-600 bg-amber-600 text-white'
+					: 'border-amber-600 text-amber-500 hover:bg-amber-600 hover:text-white'}"
 				onclick={() => (showDirSearch = !showDirSearch)}
 			>
 				Add Index
@@ -147,30 +147,30 @@
 		</div>
 
 		{#if showDirSearch}
-			<div class="w-full max-w-2xl rounded-lg border-2 border-amber-500 bg-amber-50 p-4">
+			<div class="w-full max-w-2xl rounded-lg border border-gray-700 bg-gray-800 p-4">
 				<DirSearch onsubmit={handleDirSearchSubmit} />
 			</div>
 		{/if}
 
 		{#if indexProgress}
-			<div class="w-full max-w-2xl rounded-lg border-2 border-blue-500 bg-blue-50 p-4">
+			<div class="w-full max-w-2xl rounded-lg border border-gray-700 bg-gray-800 p-4">
 				<div class="flex items-center justify-between">
 					<div class="flex-1">
-						<p class="text-sm font-medium text-blue-900">Indexing in progress</p>
+						<p class="text-sm font-medium text-blue-400">Indexing in progress</p>
 					</div>
 					<div class="flex items-center gap-3">
-						<span class="text-lg font-semibold text-blue-900">
+						<span class="text-lg font-semibold text-blue-400">
 							{indexProgress.percentComplete}%
 						</span>
 						<button
-							class="rounded-md border border-red-500 px-3 py-1 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+							class="rounded-md border border-red-500 px-3 py-1 text-sm font-medium text-red-400 transition-colors hover:bg-red-500 hover:text-white"
 							onclick={() => cancelIndexTask(indexProgress.id)}
 						>
 							Cancel
 						</button>
 					</div>
 				</div>
-				<p class="truncate text-sm text-blue-700">
+				<p class="truncate text-sm text-gray-400">
 					Scanning: {indexProgress.queue}
 				</p>
 			</div>
@@ -197,8 +197,8 @@
 						d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 					/>
 				</svg>
-				<p class="text-lg text-gray-500">No results found for "{searchValue}"</p>
-				<p class="mt-1 text-sm text-gray-400">Try a different search term</p>
+				<p class="text-lg text-gray-400">No results found for "{searchValue}"</p>
+				<p class="mt-1 text-sm text-gray-500">Try a different search term</p>
 			</div>
 		{:else}
 			<div class="flex w-full flex-col items-center justify-center py-12">
@@ -215,8 +215,8 @@
 						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 					/>
 				</svg>
-				<p class="text-2xl font-light text-gray-600">Start with a semantic search</p>
-				<p class="mt-2 text-sm text-gray-400">Enter keywords to find relevant documents</p>
+				<p class="text-2xl font-light text-gray-300">Start with a semantic search</p>
+				<p class="mt-2 text-sm text-gray-500">Enter keywords to find relevant documents</p>
 			</div>
 		{/if}
 	</div>

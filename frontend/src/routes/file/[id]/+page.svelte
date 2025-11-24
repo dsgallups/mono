@@ -106,50 +106,61 @@
 </script>
 
 {#if !file}
-	<div class="flex h-screen items-center justify-center">
-		<p class="text-gray-500">Loading...</p>
+	<div class="flex h-screen items-center justify-center bg-gray-900">
+		<p class="text-gray-400">Loading...</p>
 	</div>
 {:else}
-	<div class="container mx-auto max-w-4xl p-6">
-		<div class="mb-6 border-b pb-4">
-			<button
-				onclick={() => goto(resolve('/'))}
-				class="mb-4 flex items-center gap-2 rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-			>
-				<svg
-					class="h-4 w-4"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
+	<div class="min-h-screen bg-gray-900">
+		<div class="container mx-auto max-w-4xl p-6">
+			<div class="mb-6 border-b border-gray-700 pb-4">
+				<button
+					onclick={() => goto(resolve('/'))}
+					class="mb-4 flex items-center gap-2 rounded bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700"
 				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 19l-7-7m0 0l7-7m-7 7h18"
-					></path>
-				</svg>
-				Back to Search
-			</button>
-			<h1 class="text-2xl font-bold">{file.title || 'Untitled'}</h1>
-			<p class="text-sm text-gray-500">File ID: {file.id}</p>
-		</div>
+					<svg
+						class="h-4 w-4"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M10 19l-7-7m0 0l7-7m-7 7h18"
+						></path>
+					</svg>
+					Back to Search
+				</button>
+				<h1 class="text-2xl font-bold text-gray-200">{file.title || 'Untitled'}</h1>
+				<p class="text-sm text-gray-400">File ID: {file.id}</p>
+				{#if file.chunks.length > 0}
+					<button
+						class="cursor-pointer text-sm text-blue-600"
+						onclick={() => {
+							document.location = `/file/${page.params.id}`;
+						}}>Clear Highlight</button
+					>
+				{/if}
+			</div>
 
-		<div class="prose max-w-none">
-			<div
-				class="overflow-x-auto rounded bg-gray-50 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap"
-			>
-				<!--eslint-disable-next-line svelte/require-each-key-->
-				{#each contentSegments as segment}
-					{#if segment.highlighted}
-						<mark class="bg-yellow-200 px-0.5" title={`Chunk ID: ${segment.chunkId}`}
-							>{segment.text}</mark
-						>
-					{:else}
-						{segment.text}
-					{/if}
-				{/each}
+			<div>
+				<div
+					class="overflow-x-auto rounded bg-gray-950 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-300"
+				>
+					<!--eslint-disable-next-line svelte/require-each-key-->
+					{#each contentSegments as segment}
+						{#if segment.highlighted}
+							<mark
+								class="bg-yellow-400 px-0.5 font-medium text-black"
+								title={`Chunk ID: ${segment.chunkId}`}>{segment.text}</mark
+							>
+						{:else}
+							{segment.text}
+						{/if}
+					{/each}
+				</div>
 			</div>
 		</div>
 	</div>

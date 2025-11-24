@@ -30,21 +30,34 @@
 			const chunk = file.chunks[0];
 			const chunkText = chunk.content;
 
-			// Create a normalized version of the text (without newlines) and keep track of positions
+			// Normalize both texts by replacing all consecutive whitespace with single spaces
 			let normalizedText = '';
-			let originalToNormalized = []; // Maps original index to normalized index
 			let normalizedToOriginal = []; // Maps normalized index to original index
+			let inWhitespace = false;
 
 			for (let i = 0; i < text.length; i++) {
-				if (text[i] !== '\n' && text[i] !== '\r') {
+				const char = text[i];
+				const isWhitespace = /\s/.test(char);
+
+				if (isWhitespace) {
+					if (!inWhitespace) {
+						normalizedText += ' ';
+						normalizedToOriginal.push(i);
+						inWhitespace = true;
+					}
+				} else {
+					normalizedText += char;
 					normalizedToOriginal.push(i);
-					normalizedText += text[i];
+					inWhitespace = false;
 				}
-				originalToNormalized.push(normalizedText.length - 1);
 			}
 
+			// Normalize the chunk text the same way
+			let normalizedChunk = chunkText.replace(/\s+/g, ' ').trim();
+			normalizedText = normalizedText.trim();
+
 			// Find the chunk in the normalized text
-			const normalizedIndex = normalizedText.indexOf(chunkText);
+			const normalizedIndex = normalizedText.indexOf(normalizedChunk);
 			console.log('normalized index', normalizedIndex);
 			console.log('normalized text', normalizedText);
 			console.log('chunk', chunkText);
@@ -52,10 +65,10 @@
 			if (normalizedIndex !== -1) {
 				// Map back to original text positions
 				const originalStartIndex = normalizedToOriginal[normalizedIndex];
-				const normalizedEndIndex = normalizedIndex + chunkText.length;
+				const normalizedEndIndex = normalizedIndex + normalizedChunk.length - 1;
 				const originalEndIndex =
 					normalizedEndIndex < normalizedToOriginal.length
-						? normalizedToOriginal[normalizedEndIndex]
+						? normalizedToOriginal[normalizedEndIndex] + 1
 						: text.length;
 
 				// Add text before the chunk (if any)
@@ -118,7 +131,7 @@
 				<!--eslint-disable-next-line svelte/require-each-key-->
 				{#each contentSegments as segment}
 					{#if segment.highlighted}
-						<mark class="bg-yellow-200 px-0.5 text-red-400" title={`Chunk ID: ${segment.chunkId}`}>
+						<mark class="bg-yellow-200 px-0.5" title={`Chunk ID: ${segment.chunkId}`}>
 							{segment.text}
 							</mark>
 					{:else}

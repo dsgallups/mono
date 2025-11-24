@@ -56,9 +56,14 @@
 </script>
 
 <button
-	class="flex flex-1 shrink flex-col items-center border border-stone-400 p-4"
+	class="flex flex-1 shrink cursor-pointer flex-col items-center border border-stone-400 p-4"
 	onclick={() => {
-		goto(resolve(`/file/${file.id}?search=${search}`));
+		if (chunkContent.length === 0) {
+			goto(resolve(`/file/${file.id}`));
+		} else {
+			let mostRelevantChunk = chunkContent[0]!;
+			goto(resolve(`/file/${file.id}chunk=${mostRelevantChunk.id}`));
+		}
 	}}
 >
 	<div class="flex h-10 w-10 items-center justify-center">

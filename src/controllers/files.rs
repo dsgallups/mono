@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-use embed_db::{EMBEDDER, EMBED_DB};
+use embed_db::{EMBED_DB, EMBEDDER};
 use loco_rs::prelude::*;
 use sea_orm::PaginatorTrait;
 use serde::Deserialize;
@@ -127,9 +127,34 @@ pub async fn list(
     Ok(Json(result))
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ChunkParams {
+    chunk: Option<i32>,
+}
+
 #[debug_handler]
-pub async fn get_one(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
-    format::json(load_item(&ctx, id).await?)
+pub async fn get_one(
+    Path(id): Path<i32>,
+    State(ctx): State<AppContext>,
+    Query(params): Query<ChunkParams>,
+) -> Result<Json<FileSimilarity>> {
+    let file = load_item(&ctx, id).await?;
+    let mut response = FileSimilarity::from(file);
+
+    if let Some(id) = params.chunk
+        && let Ok(Some(file_chunk)) = file_chunks::Entity::find()
+            .filter(file_chunks::Column::Id.eq(id))
+            .one(&ctx.db)
+            .await
+    {
+        response.chunks.push(FileChunk {
+            id: file_chunk.id,
+            content: file_chunk.content,
+            similarity: 1.,
+        });
+    }
+
+    Ok(Json(response))
 }
 
 pub fn routes() -> Routes {

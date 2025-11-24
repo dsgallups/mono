@@ -97,6 +97,7 @@ pub async fn list(
         let files = files.get_mut(&chunk.file_id).unwrap();
         let similarity = neighbors.get(&chunk.id).unwrap();
         files.chunks.push(FileChunk {
+            id: chunk.id,
             content: chunk.content,
             similarity: *similarity,
         });

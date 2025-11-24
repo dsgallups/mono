@@ -59,6 +59,6 @@
 			</div>
 		</div>
 	{:else}
-		<MainView {fetchIndex} />
+		<MainView {fetchIndex} {onSubmitDirSearch} />
 	{/if}
 </div>

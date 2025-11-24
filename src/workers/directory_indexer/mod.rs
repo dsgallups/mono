@@ -106,7 +106,9 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 task_am.progress = Set(entries_processed as f32 / entry_count as f32);
             }
             task_am.queue = Set(new_registration.path.to_string_lossy().into_owned());
-            _ = task_am.update(&self.ctx.db).await;
+            if let Err(DbErr::RecordNotFound(_)) = task_am.update(&self.ctx.db).await {
+                return Ok(());
+            }
 
             //yes, bad. I know. Hope you don't run this on windows
             let path = new_registration.path.to_string_lossy().into_owned();

@@ -29,6 +29,7 @@ impl From<files::Model> for FileResponse {
 
 #[derive(Serialize)]
 pub struct FileChunk {
+    pub id: i32,
     pub content: String,
     pub similarity: f32,
 }

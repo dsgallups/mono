@@ -30,7 +30,7 @@
 	});
 </script>
 
-<div class="flex">
+<div class="flex gap-2">
 	<div class="relative">
 		<input
 			placeholder="Index Directory"
@@ -56,7 +56,7 @@
 		/>
 
 		{#if value !== ''}
-			<div class="absolute top-full box-border flex w-full border border-blue-600">
+			<div class="absolute top-full box-border flex w-full border border-blue-600 bg-gray-900">
 				{#await searchResults}
 					<p>Loading</p>
 				{:then results}
@@ -95,11 +95,11 @@
 	</div>
 
 	<button
-		class="cursor-pointer rounded-sm bg-orange-400"
+		class="w-30 cursor-pointer rounded-sm border border-amber-300 px-2 py-2"
 		onclick={() => {
 			onsubmit(value);
 		}}
 	>
-		Do it
+		Scan
 	</button>
 </div>

@@ -13,13 +13,16 @@ export type IndexResponse = {
 };
 export type FileSimilarity = {
 	id: number;
-	file_type: string;
+	file_type: FileType;
 	title: string;
 	path: string;
 	chunks: FileChunk[];
 };
 
+type FileType = 'text' | 'jpeg' | 'unknown';
+
 export type FileChunk = {
+	id: number;
 	content: string;
 	similarity: number;
 };

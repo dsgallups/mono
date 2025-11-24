@@ -149,10 +149,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             }
             EMBED_DB.insert(new_embeds);
         }
-        info!("DONE, SAVING!");
-        EMBED_DB.save();
         info!("FINISHED!");
-
         Ok(())
     }
 }

@@ -29,29 +29,54 @@
 		if (file.chunks && file.chunks.length > 0 && file.chunks[0].content) {
 			const chunk = file.chunks[0];
 			const chunkText = chunk.content;
-			const index = text.indexOf(chunkText);
 
-			if (index !== -1) {
+			// Create a normalized version of the text (without newlines) and keep track of positions
+			let normalizedText = '';
+			let originalToNormalized = []; // Maps original index to normalized index
+			let normalizedToOriginal = []; // Maps normalized index to original index
+
+			for (let i = 0; i < text.length; i++) {
+				if (text[i] !== '\n' && text[i] !== '\r') {
+					normalizedToOriginal.push(i);
+					normalizedText += text[i];
+				}
+				originalToNormalized.push(normalizedText.length - 1);
+			}
+
+			// Find the chunk in the normalized text
+			const normalizedIndex = normalizedText.indexOf(chunkText);
+			console.log('normalized index', normalizedIndex);
+			console.log('normalized text', normalizedText);
+			console.log('chunk', chunkText);
+
+			if (normalizedIndex !== -1) {
+				// Map back to original text positions
+				const originalStartIndex = normalizedToOriginal[normalizedIndex];
+				const normalizedEndIndex = normalizedIndex + chunkText.length;
+				const originalEndIndex =
+					normalizedEndIndex < normalizedToOriginal.length
+						? normalizedToOriginal[normalizedEndIndex]
+						: text.length;
+
 				// Add text before the chunk (if any)
-				if (index > 0) {
+				if (originalStartIndex > 0) {
 					segments.push({
-						text: text.substring(0, index),
+						text: text.substring(0, originalStartIndex),
 						highlighted: false
 					});
 				}
 
-				// Add the highlighted chunk
+				// Add the highlighted chunk (from the original text, preserving newlines)
 				segments.push({
-					text: chunkText,
+					text: text.substring(originalStartIndex, originalEndIndex),
 					highlighted: true,
 					chunkId: chunk.id
 				});
 
 				// Add text after the chunk (if any)
-				const endIndex = index + chunkText.length;
-				if (endIndex < text.length) {
+				if (originalEndIndex < text.length) {
 					segments.push({
-						text: text.substring(endIndex),
+						text: text.substring(originalEndIndex),
 						highlighted: false
 					});
 				}

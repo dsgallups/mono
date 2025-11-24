@@ -6,21 +6,17 @@
 	}
 	let { file }: Props = $props();
 
-	let relevantChunk = $derived.by(() => {
-		if (file.chunks.length === 0) {
-			return null;
-		}
+	let hasChunks = $derived(file.chunks.length !== 0);
 
-		return file.chunks;
-	});
+	//let chunkContent = $derived()
 </script>
 
 <div class="flex flex-1 shrink flex-col items-center border border-stone-400 p-4">
 	<div class="h-10 w-10 bg-red-400"></div>
 	<p>{file.title}</p>
-	{#if relevantChunk !== null}
-		<div>
-			{#each relevantChunk as chunk (chunk.id)}
+	{#if hasChunks}
+		<div class="min-w-100">
+			{#each file.chunks as chunk (chunk.id)}
 				<div>
 					<p>Score: {chunk.similarity}</p>
 					<p>{chunk.content}</p>

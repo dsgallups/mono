@@ -12,8 +12,41 @@
 	let chunkContent = $derived.by(() => {
 		let content = [];
 
-		for (const chunk in file.chunks) {
-			//the goal is to highlight characters that match the search query, if there are any.
+		for (const chunk of file.chunks) {
+			let segments = [];
+
+			if (search && search.length > 0) {
+				let text = chunk.content;
+				let searchLower = search.toLowerCase();
+				let textLower = text.toLowerCase();
+				let lastIndex = 0;
+
+				let index = textLower.indexOf(searchLower);
+				while (index !== -1) {
+					if (index > lastIndex) {
+						segments.push({ text: text.substring(lastIndex, index), highlighted: false });
+					}
+
+					segments.push({
+						text: text.substring(index, index + search.length),
+						highlighted: true
+					});
+
+					lastIndex = index + search.length;
+					index = textLower.indexOf(searchLower, lastIndex);
+				}
+
+				if (lastIndex < text.length) {
+					segments.push({ text: text.substring(lastIndex), highlighted: false });
+				}
+			} else {
+				segments.push({ text: chunk.content, highlighted: false });
+			}
+
+			content.push({
+				...chunk,
+				segments
+			});
 		}
 
 		return content;
@@ -25,10 +58,19 @@
 	<p>{file.title}</p>
 	{#if hasChunks}
 		<div class="min-w-100">
-			{#each file.chunks as chunk (chunk.id)}
+			{#each chunkContent as chunk (chunk.id)}
 				<div>
 					<p>Score: {chunk.similarity}</p>
-					<p>{chunk.content}</p>
+					<p>
+						<!--eslint-disable-next-line svelte/require-each-key-->
+						{#each chunk.segments as segment}
+							{#if segment.highlighted}
+								<mark class="bg-yellow-200">{segment.text}</mark>
+							{:else}
+								{segment.text}
+							{/if}
+						{/each}
+					</p>
 				</div>
 				<!-- -->
 			{/each}

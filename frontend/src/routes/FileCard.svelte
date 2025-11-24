@@ -62,7 +62,7 @@
 			goto(resolve(`/file/${file.id}`));
 		} else {
 			let mostRelevantChunk = chunkContent[0]!;
-			goto(resolve(`/file/${file.id}chunk=${mostRelevantChunk.id}`));
+			goto(resolve(`/file/${file.id}?chunk=${mostRelevantChunk.id}`));
 		}
 	}}
 >

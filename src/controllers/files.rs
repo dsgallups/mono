@@ -1,7 +1,10 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 use embed_db::{EMBEDDER, EMBED_DB};
 use loco_rs::prelude::*;
@@ -13,7 +16,7 @@ use crate::{
         _entities::files::{Entity, Model},
         file_chunks, files,
     },
-    views::{FileChunk, FileSimilarity},
+    views::{FileChunk, FileSimilarity, FileType},
 };
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
@@ -62,6 +65,7 @@ pub async fn list(
 
     struct FileData {
         title: String,
+        file_type: FileType,
         path: String,
         chunks: Vec<FileChunk>,
     }
@@ -74,11 +78,13 @@ pub async fn list(
         .unwrap()
         .into_iter()
         .map(|file| {
+            let Ok(file_type) = FileType::from_str(&file.file_type);
             (
                 file.id,
                 FileData {
                     title: file.title,
                     path: file.path,
+                    file_type,
                     chunks: Vec::new(),
                 },
             )
@@ -101,6 +107,7 @@ pub async fn list(
         .map(|(id, data)| FileSimilarity {
             id,
             title: data.title,
+            file_type: data.file_type,
             path: data.path,
             chunks: data.chunks,
         })

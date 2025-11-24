@@ -115,10 +115,12 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 .file_name()
                 .map(|name| name.to_string_lossy().into_owned())
                 .unwrap_or(path.clone());
+            let file_type = new_registration.contents.file_type();
 
             let Ok(model) = files::ActiveModel {
                 title: Set(title),
                 path: Set(path),
+                file_type: Set(file_type.to_string()),
                 ..Default::default()
             }
             .insert(&self.ctx.db)

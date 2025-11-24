@@ -3,12 +3,21 @@
 
 	interface Props {
 		file: FileSimilarity;
+		search: string;
 	}
-	let { file }: Props = $props();
+	let { file, search }: Props = $props();
 
 	let hasChunks = $derived(file.chunks.length !== 0);
 
-	//let chunkContent = $derived()
+	let chunkContent = $derived.by(() => {
+		let content = [];
+
+		for (const chunk in file.chunks) {
+			//the goal is to highlight characters that match the search query, if there are any.
+		}
+
+		return content;
+	});
 </script>
 
 <div class="flex flex-1 shrink flex-col items-center border border-stone-400 p-4">

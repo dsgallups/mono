@@ -139,7 +139,7 @@
 	{/if}
 	<div class="flex flex-wrap gap-4">
 		{#each fileResponse as file (file.id)}
-			<FileCard {file} />
+			<FileCard {file} search={searchVal} />
 		{/each}
 	</div>
 </div>

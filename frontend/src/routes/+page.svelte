@@ -34,9 +34,7 @@
 				path: value
 			})
 		});
-		console.log('HERE!');
 		if (response.ok) {
-			console.log('refetching index');
 			refetchIndex = setInterval(async () => {
 				let response = await fetchIndex();
 				if (response.length !== 0) {

@@ -9,7 +9,7 @@
 
 	interface Props {
 		fetchIndex: () => Promise<IndexResponse[]>;
-		onSubmitDirSearch: (arg0: string) => void;
+		onSubmitDirSearch: (arg0: string) => Promise<void>;
 	}
 
 	let { fetchIndex, onSubmitDirSearch }: Props = $props();
@@ -54,10 +54,12 @@
 				return;
 			}
 
+			indexResponse = null;
 			clearInterval(resultInterval);
 		} catch {
 			attempts += 1;
 			if (attempts >= 5) {
+				indexResponse = null;
 				clearInterval(resultInterval);
 			}
 		}
@@ -76,6 +78,10 @@
 	});
 
 	async function queryFiles() {
+		// if (searchVal === '') {
+		// 	fileResponse = [];
+		// 	return;
+		// }
 		apiUrl.searchParams.set('q', searchVal);
 		const result = await fetch(apiUrl);
 		const files: FileSimilarity[] = await result.json();
@@ -89,10 +95,10 @@
 		});
 	}
 
-	let showDirSearch = $state(true);
+	let showDirSearch = $state(false);
 </script>
 
-<div class="wrap flex flex-col p-5">
+<div class="wrap flex flex-col gap-4 p-5">
 	<div class="flex shrink flex-col items-start self-center">
 		<div class="flex items-center justify-center gap-2 p-4">
 			<MainSearch
@@ -114,32 +120,40 @@
 			<div class="flex border border-amber-300 p-3">
 				<div class="flex flex-col gap-2">
 					<DirSearch
-						onsubmit={(val) => {
-							onSubmitDirSearch(val);
+						onsubmit={async (val) => {
 							showDirSearch = false;
+							await onSubmitDirSearch(val);
+							resultInterval = setInterval(refetchIndex, 1000) as unknown as number;
 						}}
 					/>
 				</div>
 			</div>
 		{/if}
-	</div>
-	{#if indexView}
-		<div class="my-3 flex max-w-full items-center justify-between gap-2 border border-blue-400 p-3">
-			<p class="wrap-anywhere">Scanning {indexView.queue}</p>
-			<div class="flex items-center gap-4">
-				<p>{indexView.percent}%</p>
-				<button
-					class="cursor cursor-pointer border border-red-600 p-1"
-					onclick={() => {
-						cancelIndex(indexView.id);
-					}}>Cancel</button
-				>
+		{#if indexView}
+			<div
+				class="my-3 flex max-w-full flex-1 items-center justify-between gap-2 self-stretch border border-blue-400 p-3"
+			>
+				<p class="wrap-anywhere">Scanning {indexView.queue}</p>
+				<div class="flex items-center gap-4">
+					<p>{indexView.percent}%</p>
+					<button
+						class="cursor cursor-pointer border border-red-600 p-1"
+						onclick={() => {
+							cancelIndex(indexView.id);
+						}}>Cancel</button
+					>
+				</div>
 			</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
+
 	<div class="flex flex-wrap gap-4">
 		{#each fileResponse as file (file.id)}
 			<FileCard {file} search={searchVal} />
+		{:else}
+			<div class="flex flex-1 items-center justify-center">
+				<p class="text-3xl">Do some semantic searching!</p>
+			</div>
 		{/each}
 	</div>
 </div>

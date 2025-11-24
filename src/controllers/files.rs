@@ -103,16 +103,27 @@ pub async fn list(
         });
     }
 
-    let result = files
+    let mut result: Vec<FileSimilarity> = files
         .into_iter()
-        .map(|(id, data)| FileSimilarity {
-            id,
-            title: data.title,
-            file_type: data.file_type,
-            path: data.path,
-            chunks: data.chunks,
+        .map(|(id, mut data)| {
+            data.chunks
+                .sort_by(|a, b| b.similarity.total_cmp(&a.similarity));
+            FileSimilarity {
+                id,
+                title: data.title,
+                file_type: data.file_type,
+                path: data.path,
+                chunks: data.chunks,
+            }
         })
         .collect();
+    result.sort_by(|a, b| {
+        let a_max = a.chunks.first().map(|v| v.similarity).unwrap_or_default();
+        let b_max = b.chunks.first().map(|v| v.similarity).unwrap_or_default();
+
+        b_max.total_cmp(&a_max)
+    });
+
     Ok(Json(result))
 }
 

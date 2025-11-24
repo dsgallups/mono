@@ -45,7 +45,7 @@
 			}
 
 			for (const index of result) {
-				if (index.progress === 1) {
+				if (index.progress === 1 || index.status !== 'in_progress') {
 					continue;
 				}
 

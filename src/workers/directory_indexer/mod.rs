@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use embed_db::{NewEmbed, EMBED_DB};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -7,7 +9,10 @@ mod processor;
 use processor::*;
 use tracing::info;
 
-use crate::models::{file_chunks, files, index_tasks};
+use crate::{
+    models::{file_chunks, files, index_tasks},
+    views::IndexStatus,
+};
 
 pub struct Worker {
     pub ctx: AppContext,
@@ -106,8 +111,12 @@ impl BackgroundWorker<WorkerArgs> for Worker {
                 task_am.progress = Set(entries_processed as f32 / entry_count as f32);
             }
             task_am.queue = Set(new_registration.path.to_string_lossy().into_owned());
-            if let Err(DbErr::RecordNotFound(_)) = task_am.update(&self.ctx.db).await {
-                return Ok(());
+            if let Ok(model) = task_am.update(&self.ctx.db).await {
+                let Ok(status) = IndexStatus::from_str(&model.status);
+                if matches!(status, IndexStatus::Cancelled) {
+                    // we should cancel threads here ideally.
+                    return Ok(());
+                }
             }
 
             //yes, bad. I know. Hope you don't run this on windows
@@ -153,6 +162,10 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             }
             EMBED_DB.insert(new_embeds);
         }
+
+        let mut am = task.into_active_model();
+        am.status = Set(IndexStatus::Cancelled.to_string());
+        _ = am.save(&self.ctx.db).await;
         info!("FINISHED!");
         Ok(())
     }

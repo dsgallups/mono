@@ -9,8 +9,12 @@ export type IndexResponse = {
 	id: number;
 	path: string;
 	progress: number;
+	status: IndexStatus;
 	queue: string;
 };
+
+type IndexStatus = 'cancelled' | 'complete' | 'in_progress';
+
 export type FileSimilarity = {
 	id: number;
 	file_type: FileType;

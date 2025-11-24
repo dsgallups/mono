@@ -4,6 +4,7 @@
 	import MainSearch from './MainSearch.svelte';
 	import type { FileSimilarity, IndexResponse } from '$lib/types';
 	import { onMount } from 'svelte';
+	import FileCard from './FileCard.svelte';
 
 	interface Props {
 		fetchIndex: () => Promise<IndexResponse[]>;
@@ -29,6 +30,9 @@
 			percent
 		};
 	});
+
+	let attempts = $state(0);
+
 	async function refetchIndex() {
 		try {
 			let result = await fetchIndex();
@@ -43,8 +47,12 @@
 				return;
 			}
 			indexResponse = last;
+			attempts = 0;
 		} catch {
-			clearInterval(resultInterval);
+			attempts += 1;
+			if (attempts >= 3) {
+				clearInterval(resultInterval);
+			}
 		}
 	}
 
@@ -84,9 +92,7 @@
 	{/if}
 	<div>
 		{#each fileResponse as file (file.id)}
-			<div class="flex shrink border border-stone-400">
-				<p>{file.title}</p>
-			</div>
+			<FileCard {file} />
 		{/each}
 	</div>
 </div>

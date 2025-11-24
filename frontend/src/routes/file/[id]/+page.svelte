@@ -127,18 +127,20 @@
 		</div>
 
 		<div class="prose max-w-none">
-			<pre class="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+			<div
+				class="overflow-x-auto rounded bg-gray-50 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap"
+			>
 				<!--eslint-disable-next-line svelte/require-each-key-->
 				{#each contentSegments as segment}
 					{#if segment.highlighted}
-						<mark class="bg-yellow-200 px-0.5" title={`Chunk ID: ${segment.chunkId}`}>
-							{segment.text}
-							</mark>
+						<mark class="bg-yellow-200 px-0.5" title={`Chunk ID: ${segment.chunkId}`}
+							>{segment.text}</mark
+						>
 					{:else}
 						{segment.text}
 					{/if}
 				{/each}
-			</pre>
+			</div>
 		</div>
 
 		{#if file.chunks && file.chunks.length > 0 && file.chunks[0]}

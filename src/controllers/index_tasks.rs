@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::{
     models::_entities::index_tasks::{ActiveModel, Entity, Model},
-    views::IndexResponse,
+    views::{IndexResponse, IndexStatus},
     workers::directory_indexer,
 };
 
@@ -32,6 +32,7 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> R
     let item = ActiveModel {
         path: Set(params.path),
         queue: Set("Starting Task".to_string()),
+        status: Set(IndexStatus::InProgress.to_string()),
         ..Default::default()
     };
     let item = item.insert(&ctx.db).await?;
@@ -46,8 +47,11 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<Params>) -> R
 
 #[debug_handler]
 pub async fn remove(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
-    load_item(&ctx, id).await?.delete(&ctx.db).await?;
-    format::empty()
+    let model = load_item(&ctx, id).await?;
+    let mut am = model.into_active_model();
+    am.status = Set(IndexStatus::Cancelled.to_string());
+    am.update(&ctx.db).await?;
+    format::json(())
 }
 
 #[debug_handler]

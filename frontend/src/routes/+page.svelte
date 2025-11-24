@@ -8,16 +8,17 @@
 	let loading = $state(true);
 	let indexResponse: IndexResponse[] = $state([]);
 	onMount(async () => {
-		await fetchIndex();
+		indexResponse = await fetchIndex();
 		loading = false;
 	});
 
+	let refetchIndex: number | undefined = $state();
+
 	async function fetchIndex() {
 		const url = new URL('/api/index_tasks', page.url);
-		console.log('in fetching index');
 		const result = await fetch(url);
-		console.log('index responded!');
-		indexResponse = await result.json();
+		const response: IndexResponse[] = await result.json();
+		return response;
 	}
 
 	async function onSubmitDirSearch(value: string) {
@@ -33,10 +34,14 @@
 				path: value
 			})
 		});
-		console.log('HERE!');
 		if (response.ok) {
-			console.log('refetching index');
-			fetchIndex();
+			refetchIndex = setInterval(async () => {
+				let response = await fetchIndex();
+				if (response.length !== 0) {
+					indexResponse = response;
+					clearInterval(refetchIndex);
+				}
+			}, 500) as unknown as number;
 		}
 	}
 </script>
@@ -46,12 +51,12 @@
 		<p>Loading State</p>
 	{:else if indexResponse.length === 0}
 		<div class="flex justify-center p-5">
-			<div class="flex flex-col gap-2">
+			<div class="flex w-full min-w-2xl flex-col gap-2">
 				<p class="text-lg">Let's get to indexing!</p>
 				<DirSearch onsubmit={onSubmitDirSearch} />
 			</div>
 		</div>
 	{:else}
-		<MainView />
+		<MainView {fetchIndex} {onSubmitDirSearch} />
 	{/if}
 </div>

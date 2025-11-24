@@ -1,51 +1,223 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { SvelteURL } from 'svelte/reactivity';
-	import MainSearch from './MainSearch.svelte';
-	import type { FileSimilarity } from '$lib/types';
 	import { onMount } from 'svelte';
+	import MainSearch from './MainSearch.svelte';
+	import FileCard from './FileCard.svelte';
+	import DirSearch from './DirSearch.svelte';
+	import type { FileSimilarity, IndexResponse } from '$lib/types';
 
-	let searchVal = $state('');
-	//let initialSearch = $state(true);
-
-	function onSubmitSearch() {
-		//initialSearch = false;
-
-		const url = new URL(page.url);
-		url.searchParams.set('q', searchVal);
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(url, { replaceState: true, noScroll: true });
+	interface Props {
+		fetchIndex: () => Promise<IndexResponse[]>;
+		onSubmitDirSearch: (path: string) => Promise<void>;
 	}
 
-	let apiUrl = new SvelteURL('/api/files', page.url);
-	let fileResponse: FileSimilarity[] = $state([]);
+	let { fetchIndex, onSubmitDirSearch }: Props = $props();
+
+	// Search state
+	let searchValue = $state('');
+	let fileResults: FileSimilarity[] = $state([]);
+	let showDirSearch = $state(false);
+
+	// Indexing state
+	let currentIndexTask: IndexResponse | null = $state(null);
+	let indexPollInterval: number | undefined = $state();
+	let pollAttempts = $state(0);
+
+	const MAX_POLL_ATTEMPTS = 5;
+	const POLL_INTERVAL_MS = 1000;
+
+	let indexProgress = $derived.by(() => {
+		if (!currentIndexTask) return null;
+
+		return {
+			id: currentIndexTask.id,
+			path: currentIndexTask.path,
+			queue: currentIndexTask.queue,
+			percentComplete: (currentIndexTask.progress * 100).toFixed(1)
+		};
+	});
+
+	let filesApiUrl = new SvelteURL('/api/files', page.url);
 
 	onMount(async () => {
-		queryFiles();
+		await queryFiles();
+		await startIndexPolling();
 	});
 
 	async function queryFiles() {
-		apiUrl.searchParams.set('q', searchVal);
-		const result = await fetch(apiUrl);
-		const files: FileSimilarity[] = await result.json();
-		fileResponse = files;
+		try {
+			filesApiUrl.searchParams.set('q', searchValue);
+			const response = await fetch(filesApiUrl);
+
+			if (!response.ok) {
+				console.error('Failed to fetch files:', response.status);
+				fileResults = [];
+				return;
+			}
+
+			const files: FileSimilarity[] = await response.json();
+			fileResults = files;
+		} catch (error) {
+			console.error('Error querying files:', error);
+			fileResults = [];
+		}
+	}
+
+	async function pollIndexStatus() {
+		try {
+			const indexTasks = await fetchIndex();
+
+			if (indexTasks.length === 0) {
+				currentIndexTask = null;
+				return;
+			}
+
+			const activeTask = indexTasks.find(
+				(task) => task.progress < 1 && task.status === 'in_progress'
+			);
+
+			if (activeTask) {
+				currentIndexTask = activeTask;
+				pollAttempts = 0;
+			} else {
+				currentIndexTask = null;
+				stopIndexPolling();
+			}
+		} catch (error) {
+			console.error('Error polling index status:', error);
+			pollAttempts += 1;
+
+			if (pollAttempts >= MAX_POLL_ATTEMPTS) {
+				currentIndexTask = null;
+				stopIndexPolling();
+			}
+		}
+	}
+
+	async function startIndexPolling() {
+		await pollIndexStatus();
+
+		if (indexPollInterval) {
+			clearInterval(indexPollInterval);
+		}
+
+		indexPollInterval = setInterval(pollIndexStatus, POLL_INTERVAL_MS) as unknown as number;
+	}
+
+	function stopIndexPolling() {
+		if (indexPollInterval) {
+			clearInterval(indexPollInterval);
+			indexPollInterval = undefined;
+		}
+	}
+
+	async function cancelIndexTask(taskId: number) {
+		try {
+			const url = new URL(`/api/index_tasks/${taskId}`, page.url);
+			const response = await fetch(url, { method: 'DELETE' });
+
+			if (response.ok) {
+				currentIndexTask = null;
+			}
+		} catch (error) {
+			console.error('Error canceling index task:', error);
+		}
+	}
+
+	async function handleDirSearchSubmit(path: string) {
+		showDirSearch = false;
+		await onSubmitDirSearch(path);
+		await startIndexPolling();
 	}
 </script>
 
-<div class="wrap flex flex-col p-5">
-	<MainSearch
-		bind:value={searchVal}
-		onsubmit={onSubmitSearch}
-		onkeyup={() => {
-			queryFiles();
-		}}
-	/>
-	<div>
-		{#each fileResponse as file (file.id)}
-			<div class="flex shrink border border-stone-400">
-				<p>{file.title}</p>
+<div class="flex min-h-screen flex-col gap-6 bg-gray-900 p-6">
+	<div class="flex flex-col items-center gap-4">
+		<div class="flex items-center gap-3">
+			<MainSearch bind:value={searchValue} onkeyup={queryFiles} />
+			<button
+				class="rounded-md border-2 px-4 py-2 font-medium transition-all duration-200 {showDirSearch
+					? 'border-amber-600 bg-amber-600 text-white'
+					: 'border-amber-600 text-amber-500 hover:bg-amber-600 hover:text-white'}"
+				onclick={() => (showDirSearch = !showDirSearch)}
+			>
+				Add Index
+			</button>
+		</div>
+
+		{#if showDirSearch}
+			<div class="w-full max-w-2xl rounded-lg border border-gray-700 bg-gray-800 p-4">
+				<DirSearch onsubmit={handleDirSearchSubmit} />
 			</div>
-		{/each}
+		{/if}
+
+		{#if indexProgress}
+			<div class="w-full max-w-2xl rounded-lg border border-gray-700 bg-gray-800 p-4">
+				<div class="flex items-center justify-between">
+					<div class="flex-1">
+						<p class="text-sm font-medium text-blue-400">Indexing in progress</p>
+					</div>
+					<div class="flex items-center gap-3">
+						<span class="text-lg font-semibold text-blue-400">
+							{indexProgress.percentComplete}%
+						</span>
+						<button
+							class="rounded-md border border-red-500 px-3 py-1 text-sm font-medium text-red-400 transition-colors hover:bg-red-500 hover:text-white"
+							onclick={() => cancelIndexTask(indexProgress.id)}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+				<p class="truncate text-sm text-gray-400">
+					Scanning: {indexProgress.queue}
+				</p>
+			</div>
+		{/if}
+	</div>
+
+	<div class="flex flex-wrap gap-4">
+		{#if fileResults.length > 0}
+			{#each fileResults as file (file.id)}
+				<FileCard {file} search={searchValue} />
+			{/each}
+		{:else if searchValue}
+			<div class="flex w-full flex-col items-center justify-center py-12">
+				<svg
+					class="mb-4 h-16 w-16 text-gray-400"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+					/>
+				</svg>
+				<p class="text-lg text-gray-400">No results found for "{searchValue}"</p>
+				<p class="mt-1 text-sm text-gray-500">Try a different search term</p>
+			</div>
+		{:else}
+			<div class="flex w-full flex-col items-center justify-center py-12">
+				<svg
+					class="mb-4 h-16 w-16 text-gray-400"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					/>
+				</svg>
+				<p class="text-2xl font-light text-gray-300">Start with a semantic search</p>
+				<p class="mt-2 text-sm text-gray-500">Enter keywords to find relevant documents</p>
+			</div>
+		{/if}
 	</div>
 </div>

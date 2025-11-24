@@ -1,28 +1,20 @@
 <script lang="ts">
 	interface Props {
 		value: string;
-		onsubmit: () => void;
 		onkeyup?: () => void;
 	}
-	let { value = $bindable(), onsubmit, onkeyup }: Props = $props();
+	let { value = $bindable(), onkeyup }: Props = $props();
 </script>
 
 <div>
 	<input
-		placeholder="search"
-		class="text-black sm:w-lg lg:w-4xl"
+		placeholder="Search documents..."
+		class="box-border rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-gray-200 placeholder-gray-500 focus:border-gray-500 focus:outline-none sm:w-lg lg:w-4xl"
 		bind:value
 		onkeyup={(e) => {
-			if (e.key === 'Enter') {
-				onsubmit();
-			} else {
+			if (e.key !== 'Enter') {
 				onkeyup?.();
 			}
 		}}
 	/>
-	<button
-		onclick={() => {
-			onsubmit();
-		}}>Go</button
-	>
 </div>

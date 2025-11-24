@@ -4,6 +4,8 @@ use embed_db::{Chunk, EMBEDDER};
 use tokio::{fs, sync::Semaphore};
 use tracing::info;
 
+use crate::views::FileType;
+
 const GIGS_ALLOWED: u64 = 8;
 const BYTES_PER_PERMIT: u64 = 1 << 20;
 const MAX_BYTES: u64 = GIGS_ALLOWED * (1 << 30);
@@ -26,8 +28,8 @@ impl FileRegistration {
         //
         // Also, nasty match pipe
         let file_type = match path.extension().and_then(OsStr::to_str) {
-            Some("txt") => Some(FileType::Text),
-            Some("jpeg") => Some(FileType::Jpeg),
+            Some("txt") => Some(NeedsEmbeddings::Text),
+            Some("jpeg") => Some(NeedsEmbeddings::Jpeg),
             _ => None,
         };
 
@@ -41,10 +43,10 @@ impl FileRegistration {
         let mut _permit = None;
 
         match fs::metadata(&path).await {
-            Ok(_metadata) => {
+            Ok(metadata) => {
                 let length = metadata.len();
                 let needed = length.div_ceil(BYTES_PER_PERMIT);
-                _permit = Some(ALLOWED_THREADS.acquire().await.unwrap());
+                _permit = Some(OPEN_BYTES_SEM.acquire_many(needed as u32).await.unwrap());
             }
             Err(e) => {
                 return Err(FileRegError::io(path, e));
@@ -54,10 +56,10 @@ impl FileRegistration {
         // a better implementation with buffering, but I assumed in my
         // embedder that all file chunks are available instantly.
         let prompt = match file_type {
-            FileType::Text => fs::read_to_string(&path)
+            NeedsEmbeddings::Text => fs::read_to_string(&path)
                 .await
                 .map_err(|e| FileRegError::io(path.clone(), e))?,
-            FileType::Jpeg => {
+            NeedsEmbeddings::Jpeg => {
                 todo!("Will use CLIP on JPEGs")
             }
         };
@@ -82,15 +84,15 @@ impl FileRegistration {
 }
 
 #[derive(Clone, Copy)]
-enum FileType {
+enum NeedsEmbeddings {
     Text,
     Jpeg,
 }
-impl FileType {
+impl NeedsEmbeddings {
     pub fn into_file_bytes(self, embeddings: Vec<Chunk>) -> FileEmbeddings {
         match self {
-            FileType::Text => FileEmbeddings::Text(embeddings),
-            FileType::Jpeg => FileEmbeddings::Jpeg(embeddings),
+            NeedsEmbeddings::Text => FileEmbeddings::Text(embeddings),
+            NeedsEmbeddings::Jpeg => FileEmbeddings::Jpeg(embeddings),
         }
     }
 }
@@ -106,6 +108,13 @@ impl FileEmbeddings {
         match self {
             FileEmbeddings::Jpeg(v) | FileEmbeddings::Text(v) => Some(v.as_slice()),
             FileEmbeddings::Unknown => None,
+        }
+    }
+    pub fn file_type(&self) -> FileType {
+        match self {
+            Self::Jpeg(_) => FileType::Jpeg,
+            Self::Text(_) => FileType::Text,
+            Self::Unknown => FileType::Unknown,
         }
     }
 }

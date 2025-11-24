@@ -13,6 +13,7 @@ pub struct Model {
     pub path: String,
     #[sea_orm(column_type = "Float")]
     pub progress: f32,
+    pub status: String,
     pub queue: String,
 }
 

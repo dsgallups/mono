@@ -14,6 +14,7 @@ impl MigrationTrait for Migration {
                 ("id", ColType::PkAuto),
                 ("path", ColType::String),
                 ("progress", ColType::FloatWithDefault(0.)),
+                ("status", ColType::String),
                 ("queue", ColType::String),
             ],
             &[],

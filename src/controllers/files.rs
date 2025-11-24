@@ -1,19 +1,23 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
-use embed_db::{EMBEDDER, EMBED_DB};
+use embed_db::{EMBED_DB, EMBEDDER};
 use loco_rs::prelude::*;
 use sea_orm::PaginatorTrait;
 use serde::Deserialize;
+use tokio::fs;
 
 use crate::{
     models::{
         _entities::files::{Entity, Model},
         file_chunks, files,
     },
-    views::{FileChunk, FileSimilarity},
+    views::{FileChunk, FileDetails, FileSimilarity, FileType},
 };
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
@@ -62,6 +66,7 @@ pub async fn list(
 
     struct FileData {
         title: String,
+        file_type: FileType,
         path: String,
         chunks: Vec<FileChunk>,
     }
@@ -74,11 +79,13 @@ pub async fn list(
         .unwrap()
         .into_iter()
         .map(|file| {
+            let Ok(file_type) = FileType::from_str(&file.file_type);
             (
                 file.id,
                 FileData {
                     title: file.title,
                     path: file.path,
+                    file_type,
                     chunks: Vec::new(),
                 },
             )
@@ -91,26 +98,77 @@ pub async fn list(
         let files = files.get_mut(&chunk.file_id).unwrap();
         let similarity = neighbors.get(&chunk.id).unwrap();
         files.chunks.push(FileChunk {
+            id: chunk.id,
             content: chunk.content,
             similarity: *similarity,
         });
     }
 
-    let result = files
+    let mut result: Vec<FileSimilarity> = files
         .into_iter()
-        .map(|(id, data)| FileSimilarity {
-            id,
-            title: data.title,
-            path: data.path,
-            chunks: data.chunks,
+        .map(|(id, mut data)| {
+            data.chunks
+                .sort_by(|a, b| b.similarity.total_cmp(&a.similarity));
+            FileSimilarity {
+                id,
+                title: data.title,
+                file_type: data.file_type,
+                path: data.path,
+                chunks: data.chunks,
+            }
         })
         .collect();
+    result.sort_by(|a, b| {
+        let a_max = a.chunks.first().map(|v| v.similarity).unwrap_or_default();
+        let b_max = b.chunks.first().map(|v| v.similarity).unwrap_or_default();
+
+        b_max.total_cmp(&a_max)
+    });
+
     Ok(Json(result))
 }
 
+#[derive(Deserialize, Debug)]
+pub struct ChunkParams {
+    chunk: Option<i32>,
+}
+
 #[debug_handler]
-pub async fn get_one(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
-    format::json(load_item(&ctx, id).await?)
+pub async fn get_one(
+    Path(id): Path<i32>,
+    State(ctx): State<AppContext>,
+    Query(params): Query<ChunkParams>,
+) -> Result<Json<FileDetails>> {
+    let file = load_item(&ctx, id).await?;
+
+    let Ok(file_type) = FileType::from_str(&file.file_type);
+    let mut response = FileDetails {
+        id: file.id,
+        content: String::new(),
+        title: file.title,
+        path: file.path,
+        file_type,
+        chunks: Vec::new(),
+    };
+
+    if let Ok(contents) = fs::read_to_string(&response.path).await {
+        response.content = contents;
+    }
+
+    if let Some(id) = params.chunk
+        && let Ok(Some(file_chunk)) = file_chunks::Entity::find()
+            .filter(file_chunks::Column::Id.eq(id))
+            .one(&ctx.db)
+            .await
+    {
+        response.chunks.push(FileChunk {
+            id: file_chunk.id,
+            content: file_chunk.content,
+            similarity: 1.,
+        });
+    }
+
+    Ok(Json(response))
 }
 
 pub fn routes() -> Routes {

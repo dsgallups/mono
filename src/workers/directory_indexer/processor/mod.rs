@@ -5,7 +5,7 @@ mod subprocessor;
 use std::{io, path::PathBuf};
 
 use thiserror::Error;
-use tokio::sync::mpsc::{error::SendError, UnboundedSender};
+use tokio::sync::mpsc::{UnboundedSender, error::SendError};
 use walkdir::WalkDir;
 
 #[derive(Error, Debug)]

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use embed_db::{NewEmbed, EMBED_DB};
+use embed_db::{EMBED_DB, NewEmbed};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;

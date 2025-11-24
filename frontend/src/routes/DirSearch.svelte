@@ -31,10 +31,10 @@
 </script>
 
 <div class="flex gap-2">
-	<div class="relative">
+	<div class="relative flex-1">
 		<input
 			placeholder="Index Directory"
-			class="box-border text-black sm:w-lg lg:w-4xl"
+			class="box-border w-full text-black"
 			bind:value
 			onblur={() => {
 				focusSearch = false;

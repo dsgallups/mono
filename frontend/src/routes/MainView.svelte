@@ -159,9 +159,6 @@
 				<div class="flex items-center justify-between">
 					<div class="flex-1">
 						<p class="text-sm font-medium text-blue-900">Indexing in progress</p>
-						<p class="truncate text-sm text-blue-700">
-							Scanning: {indexProgress.queue}
-						</p>
 					</div>
 					<div class="flex items-center gap-3">
 						<span class="text-lg font-semibold text-blue-900">
@@ -175,6 +172,9 @@
 						</button>
 					</div>
 				</div>
+				<p class="truncate text-sm text-blue-700">
+					Scanning: {indexProgress.queue}
+				</p>
 			</div>
 		{/if}
 	</div>

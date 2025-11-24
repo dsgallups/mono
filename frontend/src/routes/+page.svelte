@@ -51,7 +51,7 @@
 		<p>Loading State</p>
 	{:else if indexResponse.length === 0}
 		<div class="flex justify-center p-5">
-			<div class="flex flex-col gap-2">
+			<div class="flex w-full min-w-2xl flex-col gap-2">
 				<p class="text-lg">Let's get to indexing!</p>
 				<DirSearch onsubmit={onSubmitDirSearch} />
 			</div>

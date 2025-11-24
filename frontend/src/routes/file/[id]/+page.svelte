@@ -24,79 +24,49 @@
 
 		let segments = [];
 		let text = file.content;
-		let processedPositions = new Set();
 
-		// Sort chunks by their position in the content to process them in order
-		let chunkMatches = [];
+		// Check if there's a chunk to highlight
+		if (file.chunks && file.chunks.length > 0 && file.chunks[0].content) {
+			const chunk = file.chunks[0];
+			const chunkText = chunk.content;
+			const index = text.indexOf(chunkText);
 
-		for (const chunk of file.chunks || []) {
-			if (!chunk.content) continue;
-
-			// Find all occurrences of this chunk in the full text
-			let searchText = chunk.content;
-			let index = text.indexOf(searchText);
-
-			while (index !== -1) {
-				chunkMatches.push({
-					start: index,
-					end: index + searchText.length,
-					chunkId: chunk.id,
-					similarity: chunk.similarity
-				});
-				index = text.indexOf(searchText, index + 1);
-			}
-		}
-
-		// Sort matches by start position
-		chunkMatches.sort((a, b) => a.start - b.start);
-
-		// Remove overlapping matches (keep the first one)
-		let filteredMatches = [];
-		for (const match of chunkMatches) {
-			let overlaps = false;
-			for (let pos = match.start; pos < match.end; pos++) {
-				if (processedPositions.has(pos)) {
-					overlaps = true;
-					break;
+			if (index !== -1) {
+				// Add text before the chunk (if any)
+				if (index > 0) {
+					segments.push({
+						text: text.substring(0, index),
+						highlighted: false
+					});
 				}
-			}
-			if (!overlaps) {
-				filteredMatches.push(match);
-				for (let pos = match.start; pos < match.end; pos++) {
-					processedPositions.add(pos);
-				}
-			}
-		}
 
-		// Build segments
-		let lastIndex = 0;
-		for (const match of filteredMatches) {
-			// Add text before the match (if any)
-			if (match.start > lastIndex) {
+				// Add the highlighted chunk
 				segments.push({
-					text: text.substring(lastIndex, match.start),
-					highlighted: false,
-					chunkId: null
+					text: chunkText,
+					highlighted: true,
+					chunkId: chunk.id
+				});
+
+				// Add text after the chunk (if any)
+				const endIndex = index + chunkText.length;
+				if (endIndex < text.length) {
+					segments.push({
+						text: text.substring(endIndex),
+						highlighted: false
+					});
+				}
+			} else {
+				// Chunk not found in content, just show the whole text
+				segments.push({
+					text: text,
+					highlighted: false
 				});
 			}
-
-			// Add the matched chunk text
+		} else {
+			// No chunks, just show the whole text
 			segments.push({
-				text: text.substring(match.start, match.end),
-				highlighted: true,
-				chunkId: match.chunkId,
-				similarity: match.similarity
-			});
-
-			lastIndex = match.end;
-		}
-
-		// Add any remaining text after the last match
-		if (lastIndex < text.length) {
-			segments.push({
-				text: text.substring(lastIndex),
-				highlighted: false,
-				chunkId: null
+				text: text,
+				highlighted: false
 			});
 		}
 
@@ -114,34 +84,33 @@
 			<h1 class="text-2xl font-bold">{file.title || 'Untitled'}</h1>
 			<p class="text-sm text-gray-500">File ID: {file.id}</p>
 			{#if file.chunks && file.chunks.length > 0}
-				<p class="mt-2 text-sm text-blue-600">
-					{file.chunks.length} chunk{file.chunks.length === 1 ? '' : 's'} highlighted
-				</p>
+				<p class="mt-2 text-sm text-blue-600">Chunk highlighted below</p>
 			{/if}
 		</div>
 
 		<div class="prose max-w-none">
-			<pre
-				class="font-mono text-sm leading-relaxed whitespace-pre-wrap">{#each contentSegments as segment}{#if segment.highlighted}<mark
-							class="bg-yellow-200 px-0.5"
-							title={`Chunk ID: ${segment.chunkId}, Similarity: ${segment.similarity?.toFixed(3)}`}
-							>{segment.text}</mark
-						>{:else}{segment.text}{/if}{/each}</pre>
+			<pre class="font-mono text-sm leading-relaxed whitespace-pre-wrap">
+				<!--eslint-disable-next-line svelte/require-each-key-->
+				{#each contentSegments as segment}
+					{#if segment.highlighted}
+						<mark class="bg-yellow-200 px-0.5 text-red-400" title={`Chunk ID: ${segment.chunkId}`}>
+							{segment.text}
+							</mark>
+					{:else}
+						{segment.text}
+					{/if}
+				{/each}
+			</pre>
 		</div>
 
-		{#if file.chunks && file.chunks.length > 0}
+		{#if file.chunks && file.chunks.length > 0 && file.chunks[0]}
 			<div class="mt-8 border-t pt-6">
-				<h2 class="mb-4 text-lg font-semibold">Chunks</h2>
-				<div class="space-y-4">
-					{#each file.chunks as chunk (chunk.id)}
-						<div class="rounded border border-gray-200 bg-gray-50 p-3">
-							<div class="mb-2 flex items-center justify-between text-sm text-gray-600">
-								<span>Chunk ID: {chunk.id}</span>
-								<span>Similarity: {chunk.similarity.toFixed(3)}</span>
-							</div>
-							<p class="text-sm">{chunk.content}</p>
-						</div>
-					{/each}
+				<h2 class="mb-4 text-lg font-semibold">Highlighted Chunk</h2>
+				<div class="rounded border border-gray-200 bg-gray-50 p-3">
+					<div class="mb-2 text-sm text-gray-600">
+						<span>Chunk ID: {file.chunks[0].id}</span>
+					</div>
+					<p class="text-sm">{file.chunks[0].content}</p>
 				</div>
 			</div>
 		{/if}

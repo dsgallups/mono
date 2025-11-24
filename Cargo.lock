@@ -2272,8 +2272,6 @@ dependencies = [
 [[package]]
 name = "hnsw_rs"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22884c1debedfe585612f1f6da7bfe257f557639143cac270a8ac2f8702de750"
 dependencies = [
  "anndists",
  "anyhow",

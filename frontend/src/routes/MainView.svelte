@@ -27,7 +27,6 @@
 	const MAX_POLL_ATTEMPTS = 5;
 	const POLL_INTERVAL_MS = 1000;
 
-	// Derived values
 	let indexProgress = $derived.by(() => {
 		if (!currentIndexTask) return null;
 
@@ -39,7 +38,6 @@
 		};
 	});
 
-	// API URL for file queries
 	let filesApiUrl = new SvelteURL('/api/files', page.url);
 
 	onMount(async () => {

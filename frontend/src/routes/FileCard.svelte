@@ -56,7 +56,7 @@
 </script>
 
 <button
-	class="flex flex-1 shrink cursor-pointer flex-col items-center gap-2 border border-stone-400 p-4"
+	class="flex flex-1 shrink cursor-pointer flex-col items-center gap-2 rounded-lg border border-gray-600 bg-gray-800 p-4 transition-all hover:border-gray-500 hover:shadow-lg"
 	onclick={() => {
 		if (chunkContent.length === 0) {
 			goto(resolve(`/file/${file.id}`));
@@ -114,24 +114,29 @@
 			</svg>
 		{/if}
 	</div>
-	<p>{file.title}</p>
+	<p class="text-center font-medium text-gray-200">{file.title}</p>
 	{#if hasChunks}
-		<div class="flex min-w-100 flex-col items-start justify-start">
+		<div class="mt-3 min-w-100 space-y-2 rounded-lg bg-gray-900 p-1">
 			{#each chunkContent as chunk (chunk.id)}
-				<div class="text-start">
-					<p>{(chunk.similarity * 100).toFixed(2)}%</p>
-					<p>
+				<div class="rounded bg-gray-950 p-3 text-left">
+					<div class="mb-2 flex items-center gap-2">
+						<span class="rounded-full bg-gray-700 px-2 py-0.5 text-xs font-semibold text-gray-300">
+							{(chunk.similarity * 100).toFixed(0)}% match
+						</span>
+					</div>
+					<p class="text-sm leading-relaxed text-gray-300">
 						<!--eslint-disable-next-line svelte/require-each-key-->
 						{#each chunk.segments as segment}
 							{#if segment.highlighted}
-								<mark class="bg-yellow-200">{segment.text}</mark>
+								<mark class="rounded bg-yellow-400 px-0.5 font-medium text-black"
+									>{segment.text}</mark
+								>
 							{:else}
 								{segment.text}
 							{/if}
 						{/each}
 					</p>
 				</div>
-				<!-- -->
 			{/each}
 		</div>
 	{/if}

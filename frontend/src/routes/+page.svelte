@@ -8,18 +8,23 @@
 	let loading = $state(true);
 	let indexResponse: IndexResponse[] = $state([]);
 	onMount(async () => {
-		const url = new URL('/api/index_tasks', page.url);
-		const result = await fetch(url);
-		indexResponse = await result.json();
-		//yo
+		await fetchIndex();
 		loading = false;
 	});
+
+	async function fetchIndex() {
+		const url = new URL('/api/index_tasks', page.url);
+		console.log('in fetching index');
+		const result = await fetch(url);
+		console.log('index responded!');
+		indexResponse = await result.json();
+	}
 
 	async function onSubmitDirSearch(value: string) {
 		console.log('submitting value ', value);
 		const url = new URL('/api/index_tasks', page.url);
 
-		await fetch(url, {
+		const response = await fetch(url, {
 			method: `POST`,
 			headers: {
 				'Content-Type': 'application/json'
@@ -28,6 +33,11 @@
 				path: value
 			})
 		});
+		console.log('HERE!');
+		if (response.ok) {
+			console.log('refetching index');
+			fetchIndex();
+		}
 	}
 </script>
 

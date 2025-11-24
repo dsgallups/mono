@@ -11,10 +11,21 @@
 
 	let value = $state('');
 
-	let searchResults = $derived(async () => {
-		console.log('here');
+	let focusSearch = $state(false);
+
+	let queryValue = $derived.by(() => {
+		if (focusSearch && value === '') {
+			return '.';
+		} else {
+			return value;
+		}
+	});
+
+	let searchResults = $derived.by(async () => {
+		const someVal = queryValue;
+		console.log('performing search!', queryValue);
 		let url = new URL('/api/directories', page.url);
-		url.searchParams.set('path', value);
+		url.searchParams.set('path', someVal);
 		let response = await fetch(url);
 		let responseData: string[] = await response.json();
 		return ['..', ...responseData];
@@ -27,6 +38,9 @@
 			placeholder="Index Directory"
 			class="box-border text-black sm:w-lg lg:w-4xl"
 			bind:value
+			onfocus={() => {
+				focusSearch = true;
+			}}
 			onkeyup={(e) => {
 				if (e.key === 'Enter') {
 					onsubmit(value);
@@ -42,7 +56,7 @@
 
 		{#if value !== ''}
 			<div class="absolute top-full box-border flex w-full border border-blue-600">
-				{#await searchResults()}
+				{#await searchResults}
 					<p>Loading</p>
 				{:then results}
 					<div class="flex max-h-200 flex-1 flex-col gap-2 overflow-auto">

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { FileSimilarity } from '$lib/types';
 
 	interface Props {
@@ -53,7 +55,12 @@
 	});
 </script>
 
-<div class="flex flex-1 shrink flex-col items-center border border-stone-400 p-4">
+<button
+	class="flex flex-1 shrink flex-col items-center border border-stone-400 p-4"
+	onclick={() => {
+		goto(resolve(`/file/${file.id}?search=${search}`));
+	}}
+>
 	<div class="flex h-10 w-10 items-center justify-center">
 		{#if file.file_type === 'text'}
 			<svg
@@ -123,4 +130,4 @@
 			{/each}
 		</div>
 	{/if}
-</div>
+</button>

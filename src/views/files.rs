@@ -32,20 +32,30 @@ pub struct FileChunk {
 }
 
 #[derive(Serialize)]
+pub enum FileType {
+    Text,
+    Jpeg,
+    Unknown,
+}
+
+#[derive(Serialize)]
 pub struct FileSimilarity {
     pub id: i32,
     pub title: String,
+    //pub file_type: FileType,
     pub path: String,
     pub chunks: Vec<FileChunk>,
 }
 
 impl From<files::Model> for FileSimilarity {
     fn from(value: files::Model) -> Self {
+        #[expect(unreachable_code)]
         Self {
             id: value.id,
             title: value.title,
             path: value.path,
             chunks: Vec::new(),
+            //file_type: todo!(),
         }
     }
 }

@@ -13,6 +13,7 @@ impl MigrationTrait for Migration {
             &[
                 ("id", ColType::PkAuto),
                 ("title", ColType::String),
+                ("file_type", ColType::String),
                 //This is obviously bad, should be raw bytes, but yknow. time.
                 ("path", ColType::String),
             ],

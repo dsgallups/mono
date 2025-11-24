@@ -177,7 +177,7 @@
 		{/if}
 	</div>
 
-	<div class="flex flex-1 flex-wrap items-start gap-4">
+	<div class="flex flex-wrap items-stretch gap-4">
 		{#if fileResults.length > 0}
 			{#each fileResults as file (file.id)}
 				<FileCard {file} search={searchValue} />

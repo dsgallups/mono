@@ -56,7 +56,7 @@
 </script>
 
 <button
-	class="flex flex-1 shrink cursor-pointer flex-col items-center border border-stone-400 p-4"
+	class="flex flex-1 shrink cursor-pointer flex-col items-center gap-2 border border-stone-400 p-4"
 	onclick={() => {
 		if (chunkContent.length === 0) {
 			goto(resolve(`/file/${file.id}`));
@@ -116,10 +116,10 @@
 	</div>
 	<p>{file.title}</p>
 	{#if hasChunks}
-		<div class="min-w-100">
+		<div class="flex min-w-100 flex-col items-start justify-start">
 			{#each chunkContent as chunk (chunk.id)}
-				<div>
-					<p>Score: {chunk.similarity}</p>
+				<div class="text-start">
+					<p>{(chunk.similarity * 100).toFixed(2)}%</p>
 					<p>
 						<!--eslint-disable-next-line svelte/require-each-key-->
 						{#each chunk.segments as segment}

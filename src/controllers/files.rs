@@ -10,13 +10,14 @@ use embed_db::{EMBED_DB, EMBEDDER};
 use loco_rs::prelude::*;
 use sea_orm::PaginatorTrait;
 use serde::Deserialize;
+use tokio::fs;
 
 use crate::{
     models::{
         _entities::files::{Entity, Model},
         file_chunks, files,
     },
-    views::{FileChunk, FileSimilarity, FileType},
+    views::{FileChunk, FileDetails, FileSimilarity, FileType},
 };
 
 async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
@@ -137,9 +138,22 @@ pub async fn get_one(
     Path(id): Path<i32>,
     State(ctx): State<AppContext>,
     Query(params): Query<ChunkParams>,
-) -> Result<Json<FileSimilarity>> {
+) -> Result<Json<FileDetails>> {
     let file = load_item(&ctx, id).await?;
-    let mut response = FileSimilarity::from(file);
+
+    let Ok(file_type) = FileType::from_str(&file.file_type);
+    let mut response = FileDetails {
+        id: file.id,
+        content: String::new(),
+        title: file.title,
+        path: file.path,
+        file_type,
+        chunks: Vec::new(),
+    };
+
+    if let Ok(contents) = fs::read_to_string(&response.path).await {
+        response.content = contents;
+    }
 
     if let Some(id) = params.chunk
         && let Ok(Some(file_chunk)) = file_chunks::Entity::find()

@@ -23,6 +23,15 @@ export type FileSimilarity = {
 	chunks: FileChunk[];
 };
 
+export type FileDetails = {
+	id: number;
+	file_type: FileType;
+	content: string;
+	title: string;
+	path: string;
+	chunks: FileChunk[];
+};
+
 type FileType = 'text' | 'jpeg' | 'unknown';
 
 export type FileChunk = {

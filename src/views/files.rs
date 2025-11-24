@@ -83,3 +83,27 @@ impl From<files::Model> for FileSimilarity {
         }
     }
 }
+
+#[derive(Serialize)]
+pub struct FileDetails {
+    pub id: i32,
+    pub title: String,
+    pub content: String,
+    pub file_type: FileType,
+    pub path: String,
+    pub chunks: Vec<FileChunk>,
+}
+
+impl From<files::Model> for FileDetails {
+    fn from(value: files::Model) -> Self {
+        let Ok(file_type) = FileType::from_str(&value.file_type);
+        Self {
+            id: value.id,
+            content: String::new(),
+            title: value.title,
+            path: value.path,
+            file_type,
+            chunks: Vec::new(),
+        }
+    }
+}

@@ -8,16 +8,17 @@
 	let loading = $state(true);
 	let indexResponse: IndexResponse[] = $state([]);
 	onMount(async () => {
-		await fetchIndex();
+		indexResponse = await fetchIndex();
 		loading = false;
 	});
 
+	let refetchIndex: number | undefined = $state();
+
 	async function fetchIndex() {
 		const url = new URL('/api/index_tasks', page.url);
-		console.log('in fetching index');
 		const result = await fetch(url);
-		console.log('index responded!');
-		indexResponse = await result.json();
+		const response: IndexResponse[] = await result.json();
+		return response;
 	}
 
 	async function onSubmitDirSearch(value: string) {
@@ -36,7 +37,13 @@
 		console.log('HERE!');
 		if (response.ok) {
 			console.log('refetching index');
-			fetchIndex();
+			refetchIndex = setInterval(async () => {
+				let response = await fetchIndex();
+				if (response.length !== 0) {
+					indexResponse = response;
+					clearInterval(refetchIndex);
+				}
+			}, 500) as unknown as number;
 		}
 	}
 </script>
@@ -52,6 +59,6 @@
 			</div>
 		</div>
 	{:else}
-		<MainView />
+		<MainView {fetchIndex} />
 	{/if}
 </div>

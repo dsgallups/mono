@@ -41,10 +41,10 @@ impl FileRegistration {
         let mut _permit = None;
 
         match fs::metadata(&path).await {
-            Ok(_metadata) => {
+            Ok(metadata) => {
                 let length = metadata.len();
                 let needed = length.div_ceil(BYTES_PER_PERMIT);
-                _permit = Some(ALLOWED_THREADS.acquire().await.unwrap());
+                _permit = Some(OPEN_BYTES_SEM.acquire_many(needed as u32).await.unwrap());
             }
             Err(e) => {
                 return Err(FileRegError::io(path, e));

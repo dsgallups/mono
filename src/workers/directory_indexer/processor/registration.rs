@@ -2,6 +2,7 @@ use std::{ffi::OsStr, io, path::PathBuf};
 
 use embed_db::{Chunk, EMBEDDER};
 use tokio::{fs, sync::Semaphore};
+use tracing::info;
 
 const GIGS_ALLOWED: u64 = 8;
 const BYTES_PER_PERMIT: u64 = 1 << 20;
@@ -63,9 +64,12 @@ impl FileRegistration {
 
         let embeddings = {
             let mut embedder = EMBEDDER.lock().unwrap();
-            embedder
+            let result = embedder
                 .chunk_embed(&prompt)
-                .map_err(|_e| FileRegError::embedding(path.clone()))?
+                .map_err(|_e| FileRegError::embedding(path.clone()))?;
+
+            info!("({path:?}): Embed processed!");
+            result
         };
 
         let file_embeddings = file_type.into_file_bytes(embeddings);

@@ -2,8 +2,8 @@
 	import { page } from '$app/state';
 
 	interface Props {
-		onfocus: () => void;
-		onblur: () => void;
+		onfocus?: () => void;
+		onblur?: () => void;
 		onsubmit: (arg0: string) => void;
 	}
 
@@ -32,9 +32,9 @@
 					onsubmit(value);
 				} else {
 					if (value === '') {
-						onblur();
+						onblur?.();
 					} else {
-						onfocus();
+						onfocus?.();
 					}
 				}
 			}}
@@ -64,7 +64,12 @@
 							<button
 								class="bg-blue-900 p-1 text-left hover:bg-blue-800"
 								onclick={() => {
-									value += `/${result}`;
+									let c = value.charAt(value.length - 1);
+									if (c === '/') {
+										value += result;
+									} else {
+										value += `/${result}`;
+									}
 								}}>{result}</button
 							>
 						{/each}

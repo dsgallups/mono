@@ -1,4 +1,4 @@
-pub use super::_entities::files::{ActiveModel, Entity, Model};
+pub use super::_entities::files::{ActiveModel, Column, Entity, Model};
 use sea_orm::entity::prelude::*;
 pub type Files = Entity;
 

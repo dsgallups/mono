@@ -5,6 +5,7 @@ use tokio::sync::mpsc;
 
 mod processor;
 use processor::*;
+use tracing::info;
 
 use crate::models::{file_chunks, files, index_tasks};
 
@@ -53,7 +54,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
     /// # Returns
     /// * `Result<()>` - Ok if the job completed successfully, Err otherwise
     async fn perform(&self, args: WorkerArgs) -> Result<()> {
-        println!("=================DirectoryIndexer=======================");
+        info!("=================DirectoryIndexer=======================");
 
         let task = index_tasks::Entity::find_by_id(args.task_id)
             .one(&self.ctx.db)
@@ -72,6 +73,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
 
         //todo: need to shut down gracefully
         while let Some(rx) = rx_event.recv().await {
+            info!("ev {rx:?}");
             let new_registration = match rx {
                 IndexEvent::AccessError(_io) => {
                     entries_processed += 1;
@@ -101,7 +103,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             entries_processed += 1;
             let mut task_am = task.clone().into_active_model();
             if let Some(entry_count) = entry_count {
-                task_am.progress = Set((entries_processed as f32 / entry_count as f32) as i32);
+                task_am.progress = Set(entries_processed as f32 / entry_count as f32);
             }
             task_am.queue = Set(new_registration.path.to_string_lossy().into_owned());
             _ = task_am.update(&self.ctx.db).await;
@@ -147,7 +149,7 @@ impl BackgroundWorker<WorkerArgs> for Worker {
             }
             EMBED_DB.insert(new_embeds);
         }
-
+        info!("FINISHED!");
         Ok(())
     }
 }

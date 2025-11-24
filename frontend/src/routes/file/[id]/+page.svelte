@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import type { FileDetails } from '$lib/types';
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
 
 	let file: FileDetails | undefined = $state();
 
@@ -25,14 +27,12 @@
 		let segments = [];
 		let text = file.content;
 
-		// Check if there's a chunk to highlight
 		if (file.chunks && file.chunks.length > 0 && file.chunks[0].content) {
 			const chunk = file.chunks[0];
 			const chunkText = chunk.content;
 
-			// Normalize both texts by replacing all consecutive whitespace with single spaces
 			let normalizedText = '';
-			let normalizedToOriginal = []; // Maps normalized index to original index
+			let normalizedToOriginal = [];
 			let inWhitespace = false;
 
 			for (let i = 0; i < text.length; i++) {
@@ -52,18 +52,15 @@
 				}
 			}
 
-			// Normalize the chunk text the same way
 			let normalizedChunk = chunkText.replace(/\s+/g, ' ').trim();
 			normalizedText = normalizedText.trim();
 
-			// Find the chunk in the normalized text
 			const normalizedIndex = normalizedText.indexOf(normalizedChunk);
 			console.log('normalized index', normalizedIndex);
 			console.log('normalized text', normalizedText);
 			console.log('chunk', chunkText);
 
 			if (normalizedIndex !== -1) {
-				// Map back to original text positions
 				const originalStartIndex = normalizedToOriginal[normalizedIndex];
 				const normalizedEndIndex = normalizedIndex + normalizedChunk.length - 1;
 				const originalEndIndex =
@@ -71,7 +68,6 @@
 						? normalizedToOriginal[normalizedEndIndex] + 1
 						: text.length;
 
-				// Add text before the chunk (if any)
 				if (originalStartIndex > 0) {
 					segments.push({
 						text: text.substring(0, originalStartIndex),
@@ -79,14 +75,12 @@
 					});
 				}
 
-				// Add the highlighted chunk (from the original text, preserving newlines)
 				segments.push({
 					text: text.substring(originalStartIndex, originalEndIndex),
 					highlighted: true,
 					chunkId: chunk.id
 				});
 
-				// Add text after the chunk (if any)
 				if (originalEndIndex < text.length) {
 					segments.push({
 						text: text.substring(originalEndIndex),
@@ -94,7 +88,6 @@
 					});
 				}
 			} else {
-				// Chunk not found in content, just show the whole text
 				segments.push({
 					text: text,
 					highlighted: false
@@ -119,11 +112,28 @@
 {:else}
 	<div class="container mx-auto max-w-4xl p-6">
 		<div class="mb-6 border-b pb-4">
+			<button
+				onclick={() => goto(resolve('/'))}
+				class="mb-4 flex items-center gap-2 rounded bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+			>
+				<svg
+					class="h-4 w-4"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M10 19l-7-7m0 0l7-7m-7 7h18"
+					></path>
+				</svg>
+				Back to Search
+			</button>
 			<h1 class="text-2xl font-bold">{file.title || 'Untitled'}</h1>
 			<p class="text-sm text-gray-500">File ID: {file.id}</p>
-			{#if file.chunks && file.chunks.length > 0}
-				<p class="mt-2 text-sm text-blue-600">Chunk highlighted below</p>
-			{/if}
 		</div>
 
 		<div class="prose max-w-none">
@@ -142,17 +152,5 @@
 				{/each}
 			</div>
 		</div>
-
-		{#if file.chunks && file.chunks.length > 0 && file.chunks[0]}
-			<div class="mt-8 border-t pt-6">
-				<h2 class="mb-4 text-lg font-semibold">Highlighted Chunk</h2>
-				<div class="rounded border border-gray-200 bg-gray-50 p-3">
-					<div class="mb-2 text-sm text-gray-600">
-						<span>Chunk ID: {file.chunks[0].id}</span>
-					</div>
-					<p class="text-sm">{file.chunks[0].content}</p>
-				</div>
-			</div>
-		{/if}
 	</div>
 {/if}

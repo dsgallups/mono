@@ -21,8 +21,15 @@
 		file = data;
 	});
 
-	let contentSegments = $derived.by(() => {
-		if (!file || !file.content) return [];
+	let segmentData = $derived.by(() => {
+		let someHighlighted = false;
+
+		if (!file || !file.content) {
+			return {
+				someHighlighted,
+				segments: []
+			};
+		}
 
 		let segments = [];
 		let text = file.content;
@@ -74,11 +81,10 @@
 						highlighted: false
 					});
 				}
-
+				someHighlighted = true;
 				segments.push({
 					text: text.substring(originalStartIndex, originalEndIndex),
-					highlighted: true,
-					chunkId: chunk.id
+					highlighted: true
 				});
 
 				if (originalEndIndex < text.length) {
@@ -101,7 +107,10 @@
 			});
 		}
 
-		return segments;
+		return {
+			someHighlighted,
+			segments
+		};
 	});
 </script>
 
@@ -135,7 +144,7 @@
 				</button>
 				<h1 class="text-2xl font-bold text-gray-200">{file.title || 'Untitled'}</h1>
 				<p class="text-sm text-gray-400">File ID: {file.id}</p>
-				{#if file.chunks.length > 0}
+				{#if segmentData.someHighlighted}
 					<button
 						class="cursor-pointer text-sm text-blue-600"
 						onclick={() => {
@@ -150,11 +159,10 @@
 					class="overflow-x-auto rounded bg-gray-950 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-300"
 				>
 					<!--eslint-disable-next-line svelte/require-each-key-->
-					{#each contentSegments as segment}
+					{#each segmentData.segments as segment}
 						{#if segment.highlighted}
-							<mark
-								class="bg-yellow-400 px-0.5 font-medium text-black"
-								title={`Chunk ID: ${segment.chunkId}`}>{segment.text}</mark
+							<mark class="bg-yellow-400 px-0.5 font-medium text-black" title="Highlighted Chunk"
+								>{segment.text}</mark
 							>
 						{:else}
 							{segment.text}
